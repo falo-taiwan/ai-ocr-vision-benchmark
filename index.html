@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>九宮格 AI Vision Benchmark | Falo X Force Cheng</title>
-  <meta name="description" content="九宮格 AI Vision Benchmark 是 Falo X Force Cheng 設計的 OCR、Vision、Computer Use 與 AI 回饋校正教學實驗場，支援干擾測試、綜合加權與 CSV 紀錄。">
+  <meta name="description" content="九宮格 AI Vision Benchmark 是 Falo X Force Cheng 設計的 OCR、Vision、Computer Use 與 AI 回饋校正教學實驗場，支援干擾測試、綜合加權、分析圖表與 CSV 紀錄。">
   <meta name="keywords" content="AI Vision Benchmark, OCR 教學, Computer Use, FALO, Force Cheng, AI 教學, Vision Agent, Ground Truth, weighted decision log">
   <meta name="author" content="Falo X Force Cheng">
   <meta name="date" content="2026-05-18">
   <meta name="geo.region" content="TW">
   <meta name="geo.placename" content="Taiwan">
   <meta property="og:title" content="九宮格 AI Vision Benchmark">
-  <meta property="og:description" content="可控資料生成、畫面干擾、ROI 捕捉、多演算法判斷、綜合加權、雙紀錄匯出與 AI 回饋校正的單檔教學頁。">
+  <meta property="og:description" content="可控資料生成、畫面干擾、ROI 捕捉、多演算法判斷、綜合加權、分析圖表、雙紀錄匯出與 AI 回饋校正的單檔教學頁。">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="zh_TW">
   <meta name="twitter:card" content="summary_large_image">
@@ -26,8 +26,41 @@
       --accent-dark: #1e40af;
       --ok: #087443;
       --warn: #9a3412;
+      --visual-size: 360px;
       --radius: 8px;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body[data-theme="focus"] {
+      --bg: #eef4ff;
+      --panel: #ffffff;
+      --text: #14213d;
+      --muted: #526173;
+      --line: #b9c8e6;
+      --accent: #1d4ed8;
+      --accent-dark: #1e3a8a;
+    }
+
+    body[data-theme="lab"] {
+      --bg: #f4fbf7;
+      --panel: #ffffff;
+      --text: #17231d;
+      --muted: #557064;
+      --line: #b8d8c8;
+      --accent: #087443;
+      --accent-dark: #065f46;
+    }
+
+    body[data-theme="contrast"] {
+      --bg: #101828;
+      --panel: #182230;
+      --text: #f9fafb;
+      --muted: #cbd5e1;
+      --line: #475467;
+      --accent: #facc15;
+      --accent-dark: #eab308;
+      --ok: #6ee7b7;
+      --warn: #fbbf24;
     }
 
     * {
@@ -139,11 +172,28 @@
       display: none !important;
     }
 
+    body[data-view="app"] .analysis-section {
+      display: none !important;
+    }
+
     body[data-view="project"] .main-section {
       display: none !important;
     }
 
+    body[data-view="project"] .analysis-section {
+      display: none !important;
+    }
+
     body[data-view="project"] .project-section {
+      display: grid !important;
+    }
+
+    body[data-view="analysis"] .main-section,
+    body[data-view="analysis"] .project-section {
+      display: none !important;
+    }
+
+    body[data-view="analysis"] .analysis-section {
       display: grid !important;
     }
 
@@ -175,7 +225,7 @@
 
     .visual-heading {
       width: 100%;
-      max-width: 360px;
+      max-width: var(--visual-size);
     }
 
     .visual-heading h2 {
@@ -184,7 +234,7 @@
     }
 
     canvas {
-      width: min(100%, 360px);
+      width: min(100%, var(--visual-size));
       aspect-ratio: 1;
       border: 1px solid #111827;
       background: #fff;
@@ -249,6 +299,18 @@
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
+    }
+
+    .compact-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .compact-buttons button {
+      min-height: 38px;
+      padding: 8px 10px;
+      font-weight: 700;
     }
 
     .choice-buttons button {
@@ -471,6 +533,84 @@
       gap: 12px;
     }
 
+    .analysis-section {
+      display: none;
+      gap: 12px;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .chart-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 14px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 150px 1fr 58px;
+      gap: 8px;
+      align-items: center;
+      margin: 8px 0;
+      font-size: 13px;
+    }
+
+    .bar-track {
+      height: 14px;
+      background: rgba(102, 112, 133, 0.18);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+    }
+
+    .analysis-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .summary-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      background: var(--panel);
+    }
+
+    .summary-card strong {
+      display: block;
+      font-size: 1.6rem;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .action-map {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .action-card {
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius);
+      padding: 14px;
+      background: var(--panel);
+    }
+
+    .action-card b {
+      display: block;
+      margin-bottom: 6px;
+    }
+
     .detail-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -487,7 +627,7 @@
       border: 2px solid #111827;
       background: #111827;
       gap: 2px;
-      width: min(100%, 360px);
+      width: min(100%, var(--visual-size));
     }
 
     .result-cell {
@@ -634,7 +774,10 @@
 
       .board-grid,
       .sheet-grid,
-      .detail-grid {
+      .detail-grid,
+      .chart-grid,
+      .analysis-summary,
+      .action-map {
         grid-template-columns: 1fr;
       }
 
@@ -650,12 +793,13 @@
       <div>
         <h1>九宮格 Vision Benchmark</h1>
         <p class="subtitle">Mode 1 先測顏色：產生器負責改變九宮格，掃描器用自己的節奏讀取 canvas pixel，兩套紀錄最後再比對。</p>
-        <div class="brand-mark">Falo X Force Cheng 2026/5/18 · v0.02</div>
+        <div class="brand-mark">Falo X Force Cheng 2026/5/18 · v0.03</div>
       </div>
       <nav class="mode-tabs" aria-label="Benchmark modes">
         <button class="active" type="button" data-page-view="app">Mode 1 顏色</button>
         <button type="button" disabled>Mode 2 數字</button>
         <button type="button" disabled>Mode 3 混合</button>
+        <button type="button" data-page-view="analysis">分析圖表</button>
         <button type="button" data-page-view="project">專案說明</button>
       </nav>
     </header>
@@ -723,9 +867,28 @@
           <div class="hint">干擾會跟著下一次「產生」套用，掃描紀錄與 CSV 也會留下條件。</div>
         </div>
 
+        <div class="field">
+          <label>版面配色（三種）</label>
+          <div id="themeButtons" class="compact-buttons" role="group" aria-label="版面配色">
+            <button class="active" type="button" data-theme-choice="default">標準</button>
+            <button type="button" data-theme-choice="lab">實驗綠</button>
+            <button type="button" data-theme-choice="contrast">高對比</button>
+          </div>
+          <div class="hint">示範同一套功能如何換成不同展示情境。</div>
+        </div>
+
+        <div class="field">
+          <label>視窗縮放</label>
+          <div class="compact-buttons" role="group" aria-label="視窗縮放">
+            <button id="zoomInBtn" type="button">＋放大視窗</button>
+            <button id="zoomOutBtn" type="button">－縮小視窗</button>
+          </div>
+          <div id="zoomText" class="hint">目前畫面尺度 360px。</div>
+        </div>
+
         <div class="button-row">
           <button id="startBtn" class="primary" type="button">開始</button>
-          <button id="stopBtn" type="button" disabled>暫停</button>
+          <button id="stopBtn" type="button" disabled>結束</button>
           <button id="generateOnceBtn" type="button">產生一次</button>
           <button id="scanOnceBtn" type="button">掃描一次</button>
         </div>
@@ -869,6 +1032,44 @@
       </div>
     </section>
 
+    <section class="panel analysis-section" aria-label="分析圖表">
+      <div class="record-header">
+        <div>
+          <h2>分析圖表</h2>
+          <div class="hint">把瀏覽器內的紀錄轉成可視化摘要，作為後續交給 AI 分析與校正的第一層觀察。</div>
+        </div>
+        <button type="button" data-page-view="app">回到操作頁</button>
+      </div>
+
+      <div id="analysisSummary" class="analysis-summary" aria-live="polite"></div>
+
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h3>演算法準確率</h3>
+          <div class="hint">比較中央平均、整格平均、主要投票、綜合加權在目前紀錄中的表現。</div>
+          <div id="algorithmChart"></div>
+        </div>
+
+        <div class="chart-card">
+          <h3>干擾條件準確率</h3>
+          <div class="hint">看哪一種干擾最容易造成錯判，適合拿來設計下一輪壓力測試。</div>
+          <div id="interferenceChart"></div>
+        </div>
+
+        <div class="chart-card">
+          <h3>真實顏色命中率</h3>
+          <div class="hint">檢查是否某些顏色特別容易被遮罩、雜訊或平均法帶偏。</div>
+          <div id="truthColorChart"></div>
+        </div>
+
+        <div class="chart-card">
+          <h3>錯判對照</h3>
+          <div class="hint">列出最常見的 truth -> detected 錯判路徑，方便 AI 找規律。</div>
+          <div id="confusionChart"></div>
+        </div>
+      </div>
+    </section>
+
     <section class="teaching-board project-section" aria-label="系統總覽與資料流">
       <div class="board-card">
         <h2>系統流程架構</h2>
@@ -937,6 +1138,18 @@
       <div class="board-card">
         <h2>教學說明專區</h2>
         <p class="hint">這個專區把干擾設計、Ground Truth 定義、雙紀錄表與 AI 協作方式放在同一個 `index.html`，適合直接推到 GitHub Pages。</p>
+      </div>
+
+      <div class="board-card">
+        <h3>操作案件對應</h3>
+        <div class="action-map">
+          <div class="action-card"><b>1. 開始</b><span class="hint">同時啟動產生器與掃描器，形成連續觀測資料。</span></div>
+          <div class="action-card"><b>2. 結束</b><span class="hint">停止定時任務，但保留目前畫面與紀錄，方便觀察結果。</span></div>
+          <div class="action-card"><b>3. 產生一次</b><span class="hint">只刷新 Ground Truth，可用來控制單一測試樣本。</span></div>
+          <div class="action-card"><b>4. 掃描一次</b><span class="hint">只做一次辨識，適合比對不同演算法或干擾條件。</span></div>
+          <div class="action-card"><b>5. 改變版面配色</b><span class="hint">提供標準、實驗綠、高對比三種展示風格。</span></div>
+          <div class="action-card"><b>＋ / － 視窗縮放</b><span class="hint">放大或縮小九宮格，用來示範畫面尺度對觀察與教學呈現的影響。</span></div>
+        </div>
       </div>
 
       <div class="detail-grid">
@@ -1015,6 +1228,10 @@ truth_color: secondary_color</pre>
     const clearBtn = document.getElementById('clearBtn');
     const exportBtn = document.getElementById('exportBtn');
     const exportWeightedBtn = document.getElementById('exportWeightedBtn');
+    const themeButtons = document.getElementById('themeButtons');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const zoomText = document.getElementById('zoomText');
     const truthCountEl = document.getElementById('truthCount');
     const captureCountEl = document.getElementById('captureCount');
     const accuracyTextEl = document.getElementById('accuracyText');
@@ -1022,6 +1239,11 @@ truth_color: secondary_color</pre>
     const logBody = document.getElementById('logBody');
     const weightedLogBody = document.getElementById('weightedLogBody');
     const truthLogBody = document.getElementById('truthLogBody');
+    const analysisSummary = document.getElementById('analysisSummary');
+    const algorithmChart = document.getElementById('algorithmChart');
+    const interferenceChart = document.getElementById('interferenceChart');
+    const truthColorChart = document.getElementById('truthColorChart');
+    const confusionChart = document.getElementById('confusionChart');
     const recordTabs = document.querySelectorAll('[data-record-tab]');
     const pageViewButtons = document.querySelectorAll('[data-page-view]');
     const recordPanes = {
@@ -1055,6 +1277,7 @@ truth_color: secondary_color</pre>
     let generateTimer = null;
     let scanTimer = null;
     let latestCaptureRows = [];
+    let visualSize = 360;
 
     const algorithmLabels = {
       fullAverage: '整格平均 RGB',
@@ -1387,6 +1610,7 @@ truth_color: secondary_color</pre>
       renderResultGrid();
       renderTruthLog();
       updateMetrics();
+      renderAnalysis();
     }
 
     function drawGrid(showCaptureGuides = true) {
@@ -1735,6 +1959,7 @@ truth_color: secondary_color</pre>
       renderLog();
       renderWeightedLog();
       updateMetrics();
+      renderAnalysis();
     }
 
     function updateMetrics() {
@@ -1892,6 +2117,117 @@ truth_color: secondary_color</pre>
       }).join('');
     }
 
+    function buildGroupedStats(rows, keyGetter, labelGetter) {
+      const groups = new Map();
+      rows.forEach(row => {
+        const key = keyGetter(row);
+        const label = labelGetter(row);
+        if (!groups.has(key)) {
+          groups.set(key, { key, label, total: 0, matched: 0 });
+        }
+        const group = groups.get(key);
+        group.total += 1;
+        group.matched += row.matched ? 1 : 0;
+      });
+
+      return Array.from(groups.values())
+        .map(group => ({
+          ...group,
+          accuracy: group.total ? group.matched / group.total : 0
+        }))
+        .sort((a, b) => b.total - a.total);
+    }
+
+    function renderBarChart(target, rows, emptyText = '尚無資料，請先掃描一次。') {
+      if (!rows.length) {
+        target.innerHTML = `<div class="hint">${emptyText}</div>`;
+        return;
+      }
+
+      target.innerHTML = rows.map(row => {
+        const percent = Math.round(row.accuracy * 1000) / 10;
+        return `
+          <div class="bar-row">
+            <span>${row.label}</span>
+            <div class="bar-track" aria-label="${row.label} ${percent}%">
+              <div class="bar-fill" style="width:${percent}%"></div>
+            </div>
+            <strong>${percent}%</strong>
+          </div>
+          <div class="hint">${row.matched}/${row.total} 筆命中</div>
+        `;
+      }).join('');
+    }
+
+    function renderConfusionChart() {
+      const misses = captureLog.filter(row => !row.matched);
+      const groups = new Map();
+
+      misses.forEach(row => {
+        const key = `${row.truth_color_label} -> ${row.detected_color_label}`;
+        groups.set(key, (groups.get(key) || 0) + 1);
+      });
+
+      const rows = Array.from(groups.entries())
+        .map(([label, total]) => ({ label, total }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 8);
+
+      if (!rows.length) {
+        confusionChart.innerHTML = '<div class="hint">目前沒有錯判紀錄。</div>';
+        return;
+      }
+
+      const max = Math.max(...rows.map(row => row.total));
+      confusionChart.innerHTML = rows.map(row => {
+        const percent = max ? (row.total / max) * 100 : 0;
+        return `
+          <div class="bar-row">
+            <span>${row.label}</span>
+            <div class="bar-track" aria-label="${row.label} ${row.total} 筆">
+              <div class="bar-fill" style="width:${percent}%"></div>
+            </div>
+            <strong>${row.total}</strong>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderAnalysis() {
+      const totalCaptures = captureLog.length;
+      const matchedCaptures = captureLog.filter(row => row.matched).length;
+      const totalWeighted = weightedDecisionLog.length;
+      const totalTruth = truthLog.length;
+      const accuracy = totalCaptures ? ((matchedCaptures / totalCaptures) * 100).toFixed(1) : '-';
+      const weightedMatched = weightedDecisionLog.filter(row => row.matched).length;
+      const weightedAccuracy = totalWeighted ? ((weightedMatched / totalWeighted) * 100).toFixed(1) : '-';
+
+      analysisSummary.innerHTML = `
+        <div class="summary-card"><strong>${totalCaptures}</strong><span class="hint">掃描紀錄</span></div>
+        <div class="summary-card"><strong>${accuracy}${accuracy === '-' ? '' : '%'}</strong><span class="hint">整體準確率</span></div>
+        <div class="summary-card"><strong>${totalWeighted}</strong><span class="hint">加權決策紀錄</span></div>
+        <div class="summary-card"><strong>${weightedAccuracy}${weightedAccuracy === '-' ? '' : '%'}</strong><span class="hint">加權模式準確率</span></div>
+        <div class="summary-card"><strong>${totalTruth}</strong><span class="hint">Truth 產生紀錄</span></div>
+        <div class="summary-card"><strong>${new Set(captureLog.map(row => row.interference_key)).size}</strong><span class="hint">已測干擾類型</span></div>
+        <div class="summary-card"><strong>${new Set(captureLog.map(row => row.algorithm)).size}</strong><span class="hint">已測演算法</span></div>
+        <div class="summary-card"><strong>${captureLog.filter(row => !row.matched).length}</strong><span class="hint">錯判筆數</span></div>
+      `;
+
+      renderBarChart(
+        algorithmChart,
+        buildGroupedStats(captureLog, row => row.algorithm, row => row.algorithm_label)
+      );
+      renderBarChart(
+        interferenceChart,
+        buildGroupedStats(captureLog, row => row.interference_key, row => row.interference_label)
+      );
+      renderBarChart(
+        truthColorChart,
+        buildGroupedStats(captureLog, row => row.truth_color_name, row => row.truth_color_label)
+      );
+      renderConfusionChart();
+    }
+
     function getReadableTextColor(hex) {
       const r = Number.parseInt(hex.slice(1, 3), 16);
       const g = Number.parseInt(hex.slice(3, 5), 16);
@@ -1944,6 +2280,24 @@ truth_color: secondary_color</pre>
       updateWeightTotal();
     }
 
+    function setTheme(theme) {
+      if (theme === 'default') {
+        delete document.body.dataset.theme;
+      } else {
+        document.body.dataset.theme = theme;
+      }
+
+      themeButtons.querySelectorAll('button').forEach(button => {
+        button.classList.toggle('active', button.dataset.themeChoice === theme);
+      });
+    }
+
+    function setVisualSize(nextSize) {
+      visualSize = Math.min(520, Math.max(300, nextSize));
+      document.documentElement.style.setProperty('--visual-size', `${visualSize}px`);
+      zoomText.textContent = `目前畫面尺度 ${visualSize}px。`;
+    }
+
     function startTimers() {
       stopTimers();
       buildTruthState();
@@ -1984,6 +2338,7 @@ truth_color: secondary_color</pre>
       renderWeightedLog();
       renderTruthLog();
       updateMetrics();
+      renderAnalysis();
     }
 
     function csvEscape(value) {
@@ -2119,7 +2474,12 @@ truth_color: secondary_color</pre>
       viewButton.addEventListener('click', () => {
         const view = viewButton.dataset.pageView;
         document.body.dataset.view = view;
-        pageViewButtons.forEach(button => button.classList.toggle('active', button === viewButton));
+        if (view === 'analysis') {
+          renderAnalysis();
+        }
+        pageViewButtons.forEach(button => {
+          button.classList.toggle('active', button.dataset.pageView === view && button.closest('nav'));
+        });
       });
     });
     recordTabs.forEach(tabButton => {
@@ -2141,10 +2501,22 @@ truth_color: secondary_color</pre>
     [weightCenterInput, weightFullInput, weightVoteInput].forEach(input => {
       input.addEventListener('input', updateWeightTotal);
     });
+    themeButtons.addEventListener('click', event => {
+      const button = event.target.closest('button[data-theme-choice]');
+      if (!button) {
+        return;
+      }
+      setTheme(button.dataset.themeChoice);
+    });
+    zoomInBtn.addEventListener('click', () => setVisualSize(visualSize + 40));
+    zoomOutBtn.addEventListener('click', () => setVisualSize(visualSize - 40));
 
     setAlgorithm(selectedAlgorithm);
+    setTheme('default');
+    setVisualSize(visualSize);
     renderResultGrid();
     buildTruthState();
+    renderAnalysis();
   </script>
 </body>
 </html>

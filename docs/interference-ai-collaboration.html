@@ -117,9 +117,10 @@
 <body>
   <main>
     <header>
-      <a href="../mode1-color-grid-benchmark.html">回到主操作頁</a>
+      <a href="../index.html">回到主操作頁</a>
       <h1>干擾設計與 AI 協作方式</h1>
-      <p class="lead">這份說明頁把九宮格 demo 從「畫面辨識」提升成「AI 應用落地教學模型」：先定義任務，再設計干擾，再記錄結果，最後交給 AI 做回饋校正。</p>
+      <p class="lead">這份說明頁把九宮格 demo 從「畫面辨識」提升成「AI 應用落地教學模型」：先定義任務，再設計干擾，再記錄結果與分析圖表，最後交給 AI 做回饋校正。</p>
+      <p class="note">Falo X Force Cheng 2026/5/18 · GitHub Pages 友善單檔教學範例</p>
     </header>
 
     <section class="panel">
@@ -129,6 +130,7 @@
         <div class="step"><b>干擾</b><span>雜訊、遮罩、偏移、雙色比例</span></div>
         <div class="step"><b>捕捉</b><span>中央 80% ROI</span></div>
         <div class="step"><b>辨識</b><span>平均、投票、綜合加權</span></div>
+        <div class="step"><b>分析</b><span>演算法、干擾、錯判圖表</span></div>
         <div class="step"><b>紀錄</b><span>capture_log / weighted_decision_log</span></div>
         <div class="step"><b>校正</b><span>AI 分析錯誤並建議權重</span></div>
       </div>
@@ -168,6 +170,26 @@ truth_color: secondary_color</pre>
         <tbody>
           <tr><td>底圖還原</td><td>底圖原始色</td><td>抗遮擋、抗干擾、狀態還原</td></tr>
           <tr><td>雙色比例</td><td>面積多數色</td><td>可見比例、主要色判斷、投票策略</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <h2>分析圖表與操作案件</h2>
+      <p class="note">分析圖表不是另一個演算法，而是把 capture_log 與 weighted_decision_log 轉成可教、可看、也方便交給 AI 的摘要。</p>
+      <table>
+        <thead>
+          <tr><th>圖表 / 按鈕</th><th>資料來源或動作</th><th>教學用途</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>演算法準確率</td><td>capture_log.algorithm</td><td>比較不同辨識方法的可靠度</td></tr>
+          <tr><td>干擾條件準確率</td><td>capture_log.interference_key</td><td>找出最容易造成錯判的干擾</td></tr>
+          <tr><td>真實顏色命中率</td><td>capture_log.truth_color_name</td><td>檢查顏色是否有系統性誤判</td></tr>
+          <tr><td>錯判對照</td><td>truth -> detected</td><td>讓 AI 分析錯誤路徑與修正方向</td></tr>
+          <tr><td>開始 / 結束</td><td>啟動或停止定時任務</td><td>建立或凍結連續觀測資料</td></tr>
+          <tr><td>產生一次 / 掃描一次</td><td>單次 Ground Truth 或單次辨識</td><td>控制樣本並比較演算法</td></tr>
+          <tr><td>三種版面配色</td><td>標準、實驗綠、高對比</td><td>示範同一功能在不同教學場景的呈現</td></tr>
+          <tr><td>＋ / － 視窗縮放</td><td>調整九宮格尺度</td><td>示範畫面大小對觀察與展示的影響</td></tr>
         </tbody>
       </table>
     </section>
