@@ -203,12 +203,16 @@ truth_color: secondary_color</pre>
           <tr><td>真實顏色命中率</td><td>capture_log.truth_color_name</td><td>檢查顏色是否有系統性誤判</td></tr>
           <tr><td>錯判對照</td><td>truth -> detected</td><td>讓 AI 分析錯誤路徑與修正方向</td></tr>
           <tr><td>單色版 / 多彩版</td><td>圖表顯示模式</td><td>正式報告用單色，教學解釋用多彩配對</td></tr>
+          <tr><td>JSON 匯出</td><td>完整 benchmark 狀態</td><td>保留紀錄、設定與 Ground Truth，方便 AI 分析</td></tr>
+          <tr><td>瀏覽器記憶</td><td>localStorage</td><td>重新整理仍保留紀錄，清除紀錄才刪除本機網頁記憶</td></tr>
           <tr><td>開始 / 結束</td><td>啟動或停止定時任務</td><td>建立或凍結連續觀測資料</td></tr>
           <tr><td>產生一次 / 掃描一次</td><td>單次 Ground Truth 或單次辨識</td><td>控制樣本並比較演算法</td></tr>
           <tr><td>三種版面配色</td><td>標準、實驗綠、活力橘</td><td>示範同一功能在不同教學場景的呈現</td></tr>
           <tr><td>＋ / － 視窗縮放</td><td>調整整個介面</td><td>示範畫面大小對觀察、展示與 Computer Use 的影響</td></tr>
+          <tr><td>清除紀錄與記憶</td><td>清除畫面紀錄與 localStorage</td><td>重新開始一輪乾淨實驗</td></tr>
         </tbody>
       </table>
+      <p class="note">分析圖表預設使用多彩版，因為這個 benchmark 的資料語意本來就包含顏色。</p>
     </section>
 
     <section class="panel">
