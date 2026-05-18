@@ -3,6 +3,29 @@
 **v0.06 Student Vibe Coding Edition**
 作者：Falo X Force Cheng　日期：2026/5/18
 
+> 這是 `/claude/` 子目錄的 GitHub 說明頁。這個資料夾保存 Claude 產出的學生 vibe-coding 參考版，不取代主專案根目錄的正式 `index.html`。
+
+## GitHub Pages 入口
+
+- Claude 參考版頁面：<https://falo-chinese.github.io/ai-ocr-vision-benchmark/claude/>
+- 主專案正式版：<https://falo-chinese.github.io/ai-ocr-vision-benchmark/>
+
+## 子目錄檔案
+
+| 檔案 | 用途 |
+|---|---|
+| `index.html` | Claude 版單一 HTML，可直接打開或用 GitHub Pages 執行 |
+| `README.md` | GitHub 子目錄說明，也給老師快速判斷此版定位 |
+| `student-vibe-coding-guide.md` | 給學生搭配 Gemini / Claude / ChatGPT 模仿與練習的學習手冊 |
+
+## 版本定位
+
+這個 `/claude/` 版本是 **Claude Student Vibe Coding Proposal**：
+
+- 適合讓學生比較「AI 改寫後的教材語氣與程式註解」。
+- 適合示範如何把一個可執行工具整理成 AI-readable 的學習材料。
+- 不建議直接覆蓋主專案正式版；主版本仍以根目錄 `index.html` 為準。
+
 ---
 
 ## 這個專案是什麼
@@ -177,4 +200,3 @@ v0.06 的目標是讓學生可以：
 - 新增 `README.md` 與 `student-vibe-coding-guide.md`
 - 標題、meta 描述、頁面版本字串、JSON 匯出的 version 欄位全部更新為 v0.06
 - **沒有**改動演算法邏輯、資料結構、log 欄位、CSS。學生看到的功能完全一樣
-
