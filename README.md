@@ -12,7 +12,8 @@
 
 - `index.html`
   - GitHub Pages 建議入口。
-  - 已整合主操作頁、紀錄分頁、干擾設計說明、AI 協作教學、SEO/GEO meta 與 `Falo X Force Cheng 2026/5/18` 標記。
+  - 目前版本：`v0.02`。
+  - 已整合主操作頁、橫向工作列、紀錄分頁、專案說明 view、干擾設計說明、AI 協作教學、SEO/GEO meta 與 `Falo X Force Cheng 2026/5/18` 標記。
 
 ## 目前檔案
 

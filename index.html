@@ -127,9 +127,24 @@
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(320px, 1fr) 360px;
       gap: 18px;
       align-items: start;
+    }
+
+    .main-section {
+      display: grid;
+    }
+
+    body[data-view="app"] .project-section {
+      display: none !important;
+    }
+
+    body[data-view="project"] .main-section {
+      display: none !important;
+    }
+
+    body[data-view="project"] .project-section {
+      display: grid !important;
     }
 
     .panel {
@@ -177,7 +192,9 @@
 
     .controls {
       display: grid;
+      grid-template-columns: repeat(4, minmax(220px, 1fr));
       gap: 14px;
+      align-items: start;
     }
 
     .field {
@@ -253,6 +270,7 @@
       background: #fbfcff;
       display: grid;
       gap: 8px;
+      grid-column: span 2;
     }
 
     .weight-panel.is-hidden {
@@ -284,8 +302,9 @@
 
     .status-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 8px;
+      grid-column: 1 / -1;
     }
 
     .metric {
@@ -580,6 +599,19 @@
         grid-template-columns: 1fr;
       }
 
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .weight-panel,
+      .status-grid {
+        grid-column: auto;
+      }
+
+      .status-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
       .visual-panel {
         min-height: auto;
       }
@@ -590,8 +622,8 @@
     }
 
     @media (max-width: 1100px) {
-      .layout {
-        grid-template-columns: 1fr;
+      .controls {
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
       }
     }
 
@@ -612,44 +644,24 @@
     }
   </style>
 </head>
-<body>
+<body data-view="app">
   <main class="app">
     <header>
       <div>
         <h1>九宮格 Vision Benchmark</h1>
         <p class="subtitle">Mode 1 先測顏色：產生器負責改變九宮格，掃描器用自己的節奏讀取 canvas pixel，兩套紀錄最後再比對。</p>
-        <div class="brand-mark">Falo X Force Cheng 2026/5/18</div>
+        <div class="brand-mark">Falo X Force Cheng 2026/5/18 · v0.02</div>
       </div>
       <nav class="mode-tabs" aria-label="Benchmark modes">
-        <button class="active" type="button">Mode 1 顏色</button>
+        <button class="active" type="button" data-page-view="app">Mode 1 顏色</button>
         <button type="button" disabled>Mode 2 數字</button>
         <button type="button" disabled>Mode 3 混合</button>
+        <button type="button" data-page-view="project">專案說明</button>
       </nav>
     </header>
 
-    <section class="layout">
-      <div class="panel visual-panel">
-        <div class="visual-pair">
-          <section class="visual-item" aria-label="原始九宮格">
-            <div class="visual-heading">
-              <h2>原始九宮格</h2>
-              <div class="hint">產生器畫出的 truth layer。</div>
-              <div class="capture-note">虛線代表目前辨識的捕捉區域。</div>
-            </div>
-            <canvas id="gridCanvas" width="540" height="540" aria-label="九宮格顏色測試畫布"></canvas>
-          </section>
-
-          <section class="visual-item" aria-label="辨識結果九宮格">
-            <div class="visual-heading">
-              <h2>辨識結果九宮格</h2>
-              <div class="hint">最近一次掃描的 result layer。</div>
-            </div>
-            <div id="resultGrid" class="result-grid" aria-live="polite"></div>
-          </section>
-        </div>
-      </div>
-
-      <aside class="panel controls">
+    <section class="layout main-section">
+      <aside class="panel controls" aria-label="操作工作列">
         <div class="field">
           <label for="generateSeconds">九宮格產生間隔（秒）</label>
           <input id="generateSeconds" type="number" min="1" step="1" value="3">
@@ -743,9 +755,30 @@
           </div>
         </div>
       </aside>
+
+      <div class="panel visual-panel">
+        <div class="visual-pair">
+          <section class="visual-item" aria-label="原始九宮格">
+            <div class="visual-heading">
+              <h2>原始九宮格</h2>
+              <div class="hint">產生器畫出的 truth layer。</div>
+              <div class="capture-note">虛線代表目前辨識的捕捉區域。</div>
+            </div>
+            <canvas id="gridCanvas" width="540" height="540" aria-label="九宮格顏色測試畫布"></canvas>
+          </section>
+
+          <section class="visual-item" aria-label="辨識結果九宮格">
+            <div class="visual-heading">
+              <h2>辨識結果九宮格</h2>
+              <div class="hint">最近一次掃描的 result layer。</div>
+            </div>
+            <div id="resultGrid" class="result-grid" aria-live="polite"></div>
+          </section>
+        </div>
+      </div>
     </section>
 
-    <section class="panel record-panel" aria-label="紀錄分頁">
+    <section class="panel record-panel main-section" aria-label="紀錄分頁">
       <div class="record-header">
         <div>
           <h2>紀錄資料區</h2>
@@ -836,7 +869,7 @@
       </div>
     </section>
 
-    <section class="teaching-board" aria-label="系統總覽與資料流">
+    <section class="teaching-board project-section" aria-label="系統總覽與資料流">
       <div class="board-card">
         <h2>系統流程架構</h2>
         <div class="pipeline">
@@ -900,7 +933,7 @@
       </div>
     </section>
 
-    <section id="teaching-detail" class="teaching-detail" aria-label="教學說明專區">
+    <section id="teaching-detail" class="teaching-detail project-section" aria-label="教學說明專區">
       <div class="board-card">
         <h2>教學說明專區</h2>
         <p class="hint">這個專區把干擾設計、Ground Truth 定義、雙紀錄表與 AI 協作方式放在同一個 `index.html`，適合直接推到 GitHub Pages。</p>
@@ -990,6 +1023,7 @@ truth_color: secondary_color</pre>
     const weightedLogBody = document.getElementById('weightedLogBody');
     const truthLogBody = document.getElementById('truthLogBody');
     const recordTabs = document.querySelectorAll('[data-record-tab]');
+    const pageViewButtons = document.querySelectorAll('[data-page-view]');
     const recordPanes = {
       capture: document.getElementById('capturePane'),
       weighted: document.getElementById('weightedPane'),
@@ -2081,6 +2115,13 @@ truth_color: secondary_color</pre>
     exportBtn.addEventListener('click', exportCsv);
     exportWeightedBtn.addEventListener('click', exportWeightedCsv);
     interferenceSelect.addEventListener('change', buildTruthState);
+    pageViewButtons.forEach(viewButton => {
+      viewButton.addEventListener('click', () => {
+        const view = viewButton.dataset.pageView;
+        document.body.dataset.view = view;
+        pageViewButtons.forEach(button => button.classList.toggle('active', button === viewButton));
+      });
+    });
     recordTabs.forEach(tabButton => {
       tabButton.addEventListener('click', () => {
         const target = tabButton.dataset.recordTab;
