@@ -1,0 +1,2109 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>九宮格 AI Vision Benchmark | Falo X Force Cheng</title>
+  <meta name="description" content="九宮格 AI Vision Benchmark 是 Falo X Force Cheng 設計的 OCR、Vision、Computer Use 與 AI 回饋校正教學實驗場，支援干擾測試、綜合加權與 CSV 紀錄。">
+  <meta name="keywords" content="AI Vision Benchmark, OCR 教學, Computer Use, FALO, Force Cheng, AI 教學, Vision Agent, Ground Truth, weighted decision log">
+  <meta name="author" content="Falo X Force Cheng">
+  <meta name="date" content="2026-05-18">
+  <meta name="geo.region" content="TW">
+  <meta name="geo.placename" content="Taiwan">
+  <meta property="og:title" content="九宮格 AI Vision Benchmark">
+  <meta property="og:description" content="可控資料生成、畫面干擾、ROI 捕捉、多演算法判斷、綜合加權、雙紀錄匯出與 AI 回饋校正的單檔教學頁。">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="zh_TW">
+  <meta name="twitter:card" content="summary_large_image">
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --text: #1d2433;
+      --muted: #667085;
+      --line: #d9deea;
+      --accent: #2563eb;
+      --accent-dark: #1e40af;
+      --ok: #087443;
+      --warn: #9a3412;
+      --radius: 8px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: flex-end;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: clamp(24px, 4vw, 38px);
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      max-width: 720px;
+    }
+
+    .brand-mark {
+      margin-top: 8px;
+      color: #173b8f;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .mode-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    button,
+    select,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--text);
+      padding: 9px 12px;
+      cursor: pointer;
+      min-height: 40px;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: #9db2d7;
+      background: #f8fbff;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    button.primary:hover:not(:disabled) {
+      background: var(--accent-dark);
+    }
+
+    button.active {
+      background: #eaf1ff;
+      border-color: #8cb0ff;
+      color: #173b8f;
+      font-weight: 700;
+    }
+
+    button:disabled {
+      color: #98a2b3;
+      cursor: not-allowed;
+      background: #f2f4f7;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) 360px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .visual-panel {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .visual-pair {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      align-items: start;
+    }
+
+    .visual-item {
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+    }
+
+    .visual-heading {
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .visual-heading h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    canvas {
+      width: min(100%, 360px);
+      aspect-ratio: 1;
+      border: 1px solid #111827;
+      background: #fff;
+    }
+
+    .controls {
+      display: grid;
+      gap: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      min-height: 40px;
+      padding: 8px 10px;
+      color: var(--text);
+      background: #fff;
+    }
+
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      min-height: 40px;
+      padding: 8px 10px;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .capture-note {
+      color: #dc2626;
+      font-size: 13px;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .choice-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .choice-buttons button {
+      min-height: 44px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .choice-buttons button.active {
+      background: #eaf1ff;
+      border-color: #2563eb;
+      color: #173b8f;
+    }
+
+    .weight-panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      background: #fbfcff;
+      display: grid;
+      gap: 8px;
+    }
+
+    .weight-panel.is-hidden {
+      display: none;
+    }
+
+    .weight-row {
+      display: grid;
+      grid-template-columns: 1fr 72px;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .weight-row input {
+      min-height: 34px;
+      padding: 6px 8px;
+    }
+
+    .weight-total {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--muted);
+    }
+
+    .weight-total.warn {
+      color: var(--warn);
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      background: #fbfcff;
+    }
+
+    .metric b {
+      display: block;
+      font-size: 20px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .logs {
+      margin-top: 18px;
+    }
+
+    .record-panel {
+      margin-top: 18px;
+    }
+
+    .record-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .record-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .record-tabs button {
+      font-weight: 800;
+    }
+
+    .record-tabs button.active {
+      background: #eaf1ff;
+      border-color: #2563eb;
+      color: #173b8f;
+    }
+
+    .record-pane {
+      display: none;
+    }
+
+    .record-pane.active {
+      display: block;
+    }
+
+    .teaching-board {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .board-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 12px;
+    }
+
+    .board-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 14px;
+    }
+
+    .board-card h2,
+    .board-card h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .pipeline-step {
+      border: 1px solid #b9c8e6;
+      border-radius: var(--radius);
+      background: #f8fbff;
+      padding: 10px;
+      min-height: 82px;
+      display: grid;
+      align-content: start;
+      gap: 4px;
+    }
+
+    .pipeline-step strong {
+      font-size: 14px;
+    }
+
+    .pipeline-step span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .sheet-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .sheet-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      background: #fbfcff;
+    }
+
+    .sheet-card b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .scenario-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .scenario-list li {
+      border-left: 4px solid #2563eb;
+      padding-left: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .doc-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
+      min-height: 38px;
+      border: 1px solid #8cb0ff;
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      color: #173b8f;
+      background: #eaf1ff;
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .teaching-detail {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .compare-table {
+      min-width: 680px;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border: 2px solid #111827;
+      background: #111827;
+      gap: 2px;
+      width: min(100%, 360px);
+    }
+
+    .result-cell {
+      min-height: 78px;
+      background: #fff;
+      display: grid;
+      align-content: center;
+      gap: 2px;
+      padding: 8px;
+      color: #111827;
+      text-align: center;
+      position: relative;
+    }
+
+    .result-cell.empty {
+      color: var(--muted);
+      background: #f8fafc;
+    }
+
+    .result-cell .cell-id {
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .result-cell .cell-color {
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .result-cell .cell-rgb,
+    .result-cell .cell-meta {
+      font-size: 11px;
+      color: rgba(17, 24, 39, 0.76);
+    }
+
+    .result-cell .cell-status {
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .logs h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      min-width: 880px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #eef2f8;
+      color: #344054;
+      position: sticky;
+      top: 0;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .swatch {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 1px solid rgba(0, 0, 0, 0.25);
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    .pass {
+      color: var(--ok);
+      font-weight: 700;
+    }
+
+    .fail {
+      color: var(--warn);
+      font-weight: 700;
+    }
+
+    @media (max-width: 860px) {
+      header {
+        display: grid;
+        align-items: start;
+      }
+
+      .mode-tabs {
+        justify-content: flex-start;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .visual-panel {
+        min-height: auto;
+      }
+
+      canvas {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .visual-pair {
+        grid-template-columns: 1fr;
+      }
+
+      .board-grid,
+      .sheet-grid,
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pipeline {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>九宮格 Vision Benchmark</h1>
+        <p class="subtitle">Mode 1 先測顏色：產生器負責改變九宮格，掃描器用自己的節奏讀取 canvas pixel，兩套紀錄最後再比對。</p>
+        <div class="brand-mark">Falo X Force Cheng 2026/5/18</div>
+      </div>
+      <nav class="mode-tabs" aria-label="Benchmark modes">
+        <button class="active" type="button">Mode 1 顏色</button>
+        <button type="button" disabled>Mode 2 數字</button>
+        <button type="button" disabled>Mode 3 混合</button>
+      </nav>
+    </header>
+
+    <section class="layout">
+      <div class="panel visual-panel">
+        <div class="visual-pair">
+          <section class="visual-item" aria-label="原始九宮格">
+            <div class="visual-heading">
+              <h2>原始九宮格</h2>
+              <div class="hint">產生器畫出的 truth layer。</div>
+              <div class="capture-note">虛線代表目前辨識的捕捉區域。</div>
+            </div>
+            <canvas id="gridCanvas" width="540" height="540" aria-label="九宮格顏色測試畫布"></canvas>
+          </section>
+
+          <section class="visual-item" aria-label="辨識結果九宮格">
+            <div class="visual-heading">
+              <h2>辨識結果九宮格</h2>
+              <div class="hint">最近一次掃描的 result layer。</div>
+            </div>
+            <div id="resultGrid" class="result-grid" aria-live="polite"></div>
+          </section>
+        </div>
+      </div>
+
+      <aside class="panel controls">
+        <div class="field">
+          <label for="generateSeconds">九宮格產生間隔（秒）</label>
+          <input id="generateSeconds" type="number" min="1" step="1" value="3">
+          <div class="hint">每到這個秒數，九宮格會重新隨機產生 9 個顏色。</div>
+        </div>
+
+        <div class="field">
+          <label for="scanSeconds">掃描九宮格間隔（秒）</label>
+          <input id="scanSeconds" type="number" min="1" step="1" value="2">
+          <div class="hint">掃描器會依照這個秒數忠實記錄每次觀測結果。</div>
+        </div>
+
+        <div class="field">
+          <label>顏色辨識演算法</label>
+          <div id="algorithmButtons" class="choice-buttons" role="group" aria-label="顏色辨識演算法">
+            <button class="active" type="button" data-algorithm="centerAverage">中央區域平均</button>
+            <button type="button" data-algorithm="fullAverage">整格平均 RGB</button>
+            <button type="button" data-algorithm="paletteVote">主要顏色投票</button>
+            <button type="button" data-algorithm="weightedEnsemble">綜合加權</button>
+          </div>
+          <div class="hint">掃描器會先切成 9 個區塊，再用選定方法產生決策答案。</div>
+        </div>
+
+        <div id="weightPanel" class="weight-panel is-hidden">
+          <label>綜合加權比例</label>
+          <div class="weight-row">
+            <span>中央區域平均</span>
+            <input id="weightCenter" type="number" min="0" max="100" step="1" value="33">
+          </div>
+          <div class="weight-row">
+            <span>整格平均 RGB</span>
+            <input id="weightFull" type="number" min="0" max="100" step="1" value="33">
+          </div>
+          <div class="weight-row">
+            <span>主要顏色投票</span>
+            <input id="weightVote" type="number" min="0" max="100" step="1" value="34">
+          </div>
+          <div id="weightTotal" class="weight-total">合計 100%</div>
+          <div class="hint">綜合加權會另存 weighted decision log，方便後續交給 AI 分析與校正。</div>
+        </div>
+
+        <div class="field">
+          <label for="interferencePreset">干擾生成範例</label>
+          <select id="interferencePreset">
+            <option value="none">無干擾</option>
+            <option value="noiseLow">雜訊：低</option>
+            <option value="noiseHigh">雜訊：高</option>
+            <option value="thickBorder">邊線加粗</option>
+            <option value="offset10">捕捉偏移 10%</option>
+            <option value="mixed">混合：高雜訊 + 偏移</option>
+            <option value="whiteFog">誇張：白霧遮罩</option>
+            <option value="blackVeil">誇張：黑幕遮罩</option>
+            <option value="wrongPatch">誇張：反色塊污染</option>
+            <option value="offset35">誇張：捕捉偏移 35%</option>
+            <option value="stressA">壓力 A：遮罩多數，答案仍是底圖</option>
+            <option value="stressB">壓力 B：遮罩少數，答案仍是底圖</option>
+            <option value="twoColorMajority">雙色比例測試：答案取面積多數</option>
+          </select>
+          <div class="hint">干擾會跟著下一次「產生」套用，掃描紀錄與 CSV 也會留下條件。</div>
+        </div>
+
+        <div class="button-row">
+          <button id="startBtn" class="primary" type="button">開始</button>
+          <button id="stopBtn" type="button" disabled>暫停</button>
+          <button id="generateOnceBtn" type="button">產生一次</button>
+          <button id="scanOnceBtn" type="button">掃描一次</button>
+        </div>
+
+        <div class="button-row">
+          <button id="clearBtn" type="button">清除紀錄</button>
+          <button id="exportBtn" type="button">匯出掃描 CSV</button>
+          <button id="exportWeightedBtn" type="button">匯出加權 CSV</button>
+        </div>
+
+        <div class="status-grid" aria-live="polite">
+          <div class="metric">
+            <b id="truthCount">0</b>
+            <span>產生紀錄</span>
+          </div>
+          <div class="metric">
+            <b id="captureCount">0</b>
+            <span>掃描紀錄</span>
+          </div>
+          <div class="metric">
+            <b id="accuracyText">-</b>
+            <span>顏色準確率</span>
+          </div>
+          <div class="metric">
+            <b id="runningText">停止</b>
+            <span>目前狀態</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="panel record-panel" aria-label="紀錄分頁">
+      <div class="record-header">
+        <div>
+          <h2>紀錄資料區</h2>
+          <div class="hint">三種紀錄分開看：掃描結果、綜合加權決策、產生時的 Ground Truth。</div>
+        </div>
+        <div class="record-tabs" role="tablist" aria-label="紀錄分頁">
+          <button class="active" type="button" data-record-tab="capture">掃描紀錄</button>
+          <button type="button" data-record-tab="weighted">加權決策紀錄</button>
+          <button type="button" data-record-tab="truth">Truth 產生紀錄</button>
+        </div>
+      </div>
+
+      <div id="capturePane" class="record-pane active">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>掃描時間</th>
+                <th>格子</th>
+                <th>分析區塊</th>
+                <th>演算法</th>
+                <th>干擾</th>
+                <th>真實顏色</th>
+                <th>掃描 RGB</th>
+                <th>辨識色名</th>
+                <th>結果</th>
+              </tr>
+            </thead>
+            <tbody id="logBody">
+              <tr>
+                <td colspan="10">尚未掃描。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="weightedPane" class="record-pane">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>掃描時間</th>
+                <th>格子</th>
+                <th>真實顏色</th>
+                <th>最終決策</th>
+                <th>權重</th>
+                <th>來源結果</th>
+                <th>分數</th>
+                <th>干擾</th>
+                <th>結果</th>
+              </tr>
+            </thead>
+            <tbody id="weightedLogBody">
+              <tr>
+                <td colspan="10">尚未產生綜合加權紀錄。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="truthPane" class="record-pane">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>產生時間</th>
+                <th>Generation</th>
+                <th>格子</th>
+                <th>Truth Rule</th>
+                <th>真實顏色</th>
+                <th>干擾</th>
+                <th>Patch / Secondary</th>
+                <th>比例</th>
+              </tr>
+            </thead>
+            <tbody id="truthLogBody">
+              <tr>
+                <td colspan="9">尚未產生紀錄。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="teaching-board" aria-label="系統總覽與資料流">
+      <div class="board-card">
+        <h2>系統流程架構</h2>
+        <div class="pipeline">
+          <div class="pipeline-step">
+            <strong>產生</strong>
+            <span>可控九宮格與 Ground Truth</span>
+          </div>
+          <div class="pipeline-step">
+            <strong>干擾</strong>
+            <span>雜訊、遮罩、偏移、污染色塊</span>
+          </div>
+          <div class="pipeline-step">
+            <strong>捕捉</strong>
+            <span>中央 80% ROI 或偏移 ROI</span>
+          </div>
+          <div class="pipeline-step">
+            <strong>辨識</strong>
+            <span>平均、投票、綜合加權</span>
+          </div>
+          <div class="pipeline-step">
+            <strong>決策</strong>
+            <span>權重比例產生最後答案</span>
+          </div>
+          <div class="pipeline-step">
+            <strong>紀錄</strong>
+            <span>capture_log 與 weighted log</span>
+          </div>
+          <div class="pipeline-step">
+            <strong>校正</strong>
+            <span>交給 AI 分析錯誤與調權重</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="board-grid">
+        <div class="board-card">
+          <h3>資料紀錄設計</h3>
+          <div class="sheet-grid">
+            <div class="sheet-card">
+              <b>Sheet 1: capture_log</b>
+              <span class="hint">每次掃描都寫入，記錄格子、演算法、干擾條件、辨識結果與是否命中。</span>
+            </div>
+            <div class="sheet-card">
+              <b>Sheet 2: weighted_decision_log</b>
+              <span class="hint">只有綜合加權模式寫入，保存三個基礎演算法結果、權重、分數與最後決策。</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="board-card">
+          <h3>AI 回饋校正用途</h3>
+          <ul class="scenario-list">
+            <li>分析哪種干擾最容易讓辨識失準。</li>
+            <li>比較中央平均、整格平均、主要投票在不同條件下的可靠度。</li>
+            <li>根據 weighted_decision_log 建議下一輪權重比例。</li>
+            <li>延伸到產線燈號、監控畫面、OCR 欄位與 Vision Agent 測試。</li>
+          </ul>
+          <p class="hint">完整干擾設計、A/B 任務定義、AI 協作分工已整合在本頁下方，方便 GitHub Pages 單檔發布。</p>
+          <a class="doc-link" href="#teaching-detail">前往教學說明專區</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="teaching-detail" class="teaching-detail" aria-label="教學說明專區">
+      <div class="board-card">
+        <h2>教學說明專區</h2>
+        <p class="hint">這個專區把干擾設計、Ground Truth 定義、雙紀錄表與 AI 協作方式放在同一個 `index.html`，適合直接推到 GitHub Pages。</p>
+      </div>
+
+      <div class="detail-grid">
+        <div class="board-card">
+          <h3>任務 A：底圖還原壓力測試</h3>
+          <p>正確答案永遠是底圖。遮罩、色塊、雜訊是干擾，用來測演算法是否會被污染畫面帶走。</p>
+          <div class="table-wrap">
+            <table class="compare-table">
+              <thead>
+                <tr><th>版本</th><th>遮罩占 ROI</th><th>正確答案</th><th>教學目的</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>壓力 A</td><td>大於 50%</td><td>底圖色</td><td>強干擾下仍要回到底圖。</td></tr>
+                <tr><td>壓力 B</td><td>小於 50%</td><td>底圖色</td><td>弱干擾下比較方法穩定度。</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="board-card">
+          <h3>任務 B：雙色比例測試</h3>
+          <p>每格隨機產生兩種顏色，比例介於 20% 到 80%。這個任務的正確答案是面積占比較多的顏色。</p>
+          <pre>base_color: 35%
+secondary_color: 65%
+truth_rule: area_majority
+truth_color: secondary_color</pre>
+        </div>
+      </div>
+
+      <div class="board-card">
+        <h3>不同 AI 的協作方式</h3>
+        <div class="table-wrap">
+          <table class="compare-table">
+            <thead>
+              <tr><th>AI 類型</th><th>在本頁角色</th><th>實務對應</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>模擬資料 AI</td><td>產生顏色、比例、干擾條件</td><td>合成資料、測試案例生成</td></tr>
+              <tr><td>辨識 / 運用 AI</td><td>從畫面與 ROI 做判斷</td><td>OCR、Vision、Computer Use</td></tr>
+              <tr><td>分析校正 AI</td><td>讀紀錄，分析錯誤與建議權重</td><td>模型評估、監控、策略校正</td></tr>
+              <tr><td>部署運行 AI</td><td>把流程包成可重複 runtime</td><td>API、Agent Workflow、AI Factory</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="hint">這呼應 NVIDIA AI 生態系的分層思維：企業 AI 不是單一聊天模型，而是資料、模型、工作流、部署與回饋系統的組合，例如 AI Enterprise、Blueprints、Agent、Video Analytics、Robot Simulation、AI Factory 等工作流。</p>
+      </div>
+
+      <div class="board-card">
+        <h3>教學口訣</h3>
+        <pre>先定義任務
+再設計干擾
+再選辨識方法
+再留下紀錄
+最後讓 AI 分析如何校正</pre>
+        <p class="brand-mark">Falo X Force Cheng 2026/5/18</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('gridCanvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const generateSecondsInput = document.getElementById('generateSeconds');
+    const scanSecondsInput = document.getElementById('scanSeconds');
+    const algorithmButtons = document.getElementById('algorithmButtons');
+    const weightPanel = document.getElementById('weightPanel');
+    const weightCenterInput = document.getElementById('weightCenter');
+    const weightFullInput = document.getElementById('weightFull');
+    const weightVoteInput = document.getElementById('weightVote');
+    const weightTotalEl = document.getElementById('weightTotal');
+    const interferenceSelect = document.getElementById('interferencePreset');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const generateOnceBtn = document.getElementById('generateOnceBtn');
+    const scanOnceBtn = document.getElementById('scanOnceBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const exportWeightedBtn = document.getElementById('exportWeightedBtn');
+    const truthCountEl = document.getElementById('truthCount');
+    const captureCountEl = document.getElementById('captureCount');
+    const accuracyTextEl = document.getElementById('accuracyText');
+    const runningTextEl = document.getElementById('runningText');
+    const logBody = document.getElementById('logBody');
+    const weightedLogBody = document.getElementById('weightedLogBody');
+    const truthLogBody = document.getElementById('truthLogBody');
+    const recordTabs = document.querySelectorAll('[data-record-tab]');
+    const recordPanes = {
+      capture: document.getElementById('capturePane'),
+      weighted: document.getElementById('weightedPane'),
+      truth: document.getElementById('truthPane')
+    };
+    const resultGrid = document.getElementById('resultGrid');
+
+    const gridSize = 3;
+    const cellSize = canvas.width / gridSize;
+    const captureRatio = 0.8;
+    const palette = [
+      { name: 'red', label: '紅色', hex: '#e11d48', rgb: [225, 29, 72] },
+      { name: 'orange', label: '橘色', hex: '#f97316', rgb: [249, 115, 22] },
+      { name: 'yellow', label: '黃色', hex: '#facc15', rgb: [250, 204, 21] },
+      { name: 'green', label: '綠色', hex: '#22c55e', rgb: [34, 197, 94] },
+      { name: 'blue', label: '藍色', hex: '#2563eb', rgb: [37, 99, 235] },
+      { name: 'purple', label: '紫色', hex: '#7c3aed', rgb: [124, 58, 237] },
+      { name: 'pink', label: '粉色', hex: '#ec4899', rgb: [236, 72, 153] },
+      { name: 'gray', label: '灰色', hex: '#64748b', rgb: [100, 116, 139] },
+      { name: 'teal', label: '青色', hex: '#14b8a6', rgb: [20, 184, 166] }
+    ];
+
+    let currentTruth = [];
+    let truthLog = [];
+    let captureLog = [];
+    let weightedDecisionLog = [];
+    let generationIndex = 0;
+    let captureIndex = 0;
+    let generateTimer = null;
+    let scanTimer = null;
+    let latestCaptureRows = [];
+
+    const algorithmLabels = {
+      fullAverage: '整格平均 RGB',
+      centerAverage: '中央區域平均',
+      paletteVote: '主要顏色投票',
+      weightedEnsemble: '綜合加權'
+    };
+
+    let selectedAlgorithm = 'centerAverage';
+
+    const interferencePresets = {
+      none: {
+        label: '無干擾',
+        noiseLevel: 0,
+        noiseDotCount: 0,
+        borderWidth: 3,
+        captureOffsetX: 0,
+        captureOffsetY: 0,
+        overlay: null,
+        patchMode: 'none',
+        truthRule: 'base_color',
+        patchRatioInRoi: 0,
+        twoColorMode: false
+      },
+      noiseLow: {
+        label: '雜訊：低',
+        noiseLevel: 0.18,
+        noiseDotCount: 26,
+        borderWidth: 3,
+        captureOffsetX: 0,
+        captureOffsetY: 0,
+        overlay: null,
+        patchMode: 'none',
+        truthRule: 'base_color',
+        patchRatioInRoi: 0,
+        twoColorMode: false
+      },
+      noiseHigh: {
+        label: '雜訊：高',
+        noiseLevel: 0.38,
+        noiseDotCount: 70,
+        borderWidth: 3,
+        captureOffsetX: 0,
+        captureOffsetY: 0,
+        overlay: null,
+        patchMode: 'none',
+        truthRule: 'base_color',
+        patchRatioInRoi: 0,
+        twoColorMode: false
+      },
+      thickBorder: {
+        label: '邊線加粗',
+        noiseLevel: 0,
+        noiseDotCount: 0,
+        borderWidth: 16,
+        captureOffsetX: 0,
+        captureOffsetY: 0,
+        overlay: null,
+        patchMode: 'none',
+        truthRule: 'base_color',
+        patchRatioInRoi: 0,
+        twoColorMode: false
+      },
+      offset10: {
+        label: '捕捉偏移 10%',
+        noiseLevel: 0,
+        noiseDotCount: 0,
+        borderWidth: 3,
+        captureOffsetX: 0.1,
+        captureOffsetY: 0.1,
+        overlay: null,
+        patchMode: 'none',
+        truthRule: 'base_color',
+        patchRatioInRoi: 0,
+        twoColorMode: false
+      },
+      mixed: {
+        label: '混合：高雜訊 + 偏移',
+        noiseLevel: 0.38,
+        noiseDotCount: 70,
+        borderWidth: 3,
+        captureOffsetX: 0.1,
+        captureOffsetY: 0.1,
+        overlay: null,
+        patchMode: 'none',
+        truthRule: 'base_color',
+        patchRatioInRoi: 0,
+        twoColorMode: false
+      },
+      whiteFog: {
+        label: '誇張：白霧遮罩',
+        noiseLevel: 0,
+        noiseDotCount: 0,
+        borderWidth: 3,
+        captureOffsetX: 0,
+        captureOffsetY: 0,
+        overlay: 'rgba(255, 255, 255, 0.68)',
+        patchMode: 'none',
+        truthRule: 'base_color',
+        patchRatioInRoi: 0,
+        twoColorMode: false
+      },
+      blackVeil: {
+        label: '誇張：黑幕遮罩',
+        noiseLevel: 0,
+        noiseDotCount: 0,
+        borderWidth: 3,
+        captureOffsetX: 0,
+        captureOffsetY: 0,
+        overlay: 'rgba(0, 0, 0, 0.64)',
+        patchMode: 'none',
+        truthRule: 'base_color',
+        patchRatioInRoi: 0,
+        twoColorMode: false
+      },
+      wrongPatch: {
+        label: '誇張：反色塊污染',
+        noiseLevel: 0,
+        noiseDotCount: 0,
+        borderWidth: 3,
+        captureOffsetX: 0,
+        captureOffsetY: 0,
+        overlay: null,
+        patchMode: 'wrongColor',
+        truthRule: 'base_color',
+        patchRatioInRoi: 0.49,
+        twoColorMode: false
+      },
+      offset35: {
+        label: '誇張：捕捉偏移 35%',
+        noiseLevel: 0,
+        noiseDotCount: 0,
+        borderWidth: 3,
+        captureOffsetX: 0.35,
+        captureOffsetY: 0.35,
+        overlay: null,
+        patchMode: 'none',
+        truthRule: 'base_color',
+        patchRatioInRoi: 0,
+        twoColorMode: false
+      },
+      stressA: {
+        label: '壓力 A：遮罩多數，答案仍是底圖',
+        noiseLevel: 0.42,
+        noiseDotCount: 80,
+        borderWidth: 10,
+        captureOffsetX: 0,
+        captureOffsetY: 0,
+        overlay: null,
+        patchMode: 'wrongColor',
+        truthRule: 'base_color_recovery',
+        patchRatioInRoi: 0.64,
+        twoColorMode: false
+      },
+      stressB: {
+        label: '壓力 B：遮罩少數，答案仍是底圖',
+        noiseLevel: 0.28,
+        noiseDotCount: 45,
+        borderWidth: 8,
+        captureOffsetX: 0,
+        captureOffsetY: 0,
+        overlay: null,
+        patchMode: 'wrongColor',
+        truthRule: 'base_color_recovery',
+        patchRatioInRoi: 0.36,
+        twoColorMode: false
+      },
+      twoColorMajority: {
+        label: '雙色比例測試：答案取面積多數',
+        noiseLevel: 0,
+        noiseDotCount: 0,
+        borderWidth: 3,
+        captureOffsetX: 0,
+        captureOffsetY: 0,
+        overlay: null,
+        patchMode: 'none',
+        truthRule: 'area_majority',
+        patchRatioInRoi: 0,
+        twoColorMode: true
+      }
+    };
+
+    function getInterferenceConfig() {
+      return interferencePresets[interferenceSelect.value] || interferencePresets.none;
+    }
+
+    function nowIso() {
+      return new Date().toISOString();
+    }
+
+    function randomColor() {
+      return palette[Math.floor(Math.random() * palette.length)];
+    }
+
+    function randomBetween(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function getCellId(row, col) {
+      return `r${row + 1}c${col + 1}`;
+    }
+
+    function createNoiseDots(cell, config) {
+      if (!config.noiseDotCount) {
+        return [];
+      }
+
+      return Array.from({ length: config.noiseDotCount }).map((_, index) => {
+        const isLight = index % 2 === 0;
+        const alpha = randomBetween(0.16, config.noiseLevel);
+        return {
+          x: Math.floor(randomBetween(cell.x + 10, cell.x + cell.width - 10)),
+          y: Math.floor(randomBetween(cell.y + 10, cell.y + cell.height - 10)),
+          size: Math.floor(randomBetween(3, 9)),
+          color: isLight ? `rgba(255, 255, 255, ${alpha})` : `rgba(0, 0, 0, ${alpha})`
+        };
+      });
+    }
+
+    function pickWrongPatchColor(baseColorName) {
+      const candidates = palette.filter(color => color.name !== baseColorName);
+      return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
+    function createPatch(cell, color, config) {
+      if (config.patchMode !== 'wrongColor') {
+        return null;
+      }
+
+      const patchColor = pickWrongPatchColor(color.name);
+      const captureRect = getCaptureRect(cell);
+      const areaRatio = config.patchRatioInRoi || 0.49;
+      const size = Math.floor(Math.sqrt(areaRatio) * captureRect.width);
+      return {
+        x: Math.floor(captureRect.x + (captureRect.width - size) / 2),
+        y: Math.floor(captureRect.y + (captureRect.height - size) / 2),
+        width: size,
+        height: size,
+        hex: patchColor.hex,
+        name: patchColor.name,
+        label: patchColor.label,
+        ratio_in_roi: areaRatio
+      };
+    }
+
+    function createTwoColorSegments(cell, baseColor) {
+      const secondary = pickWrongPatchColor(baseColor.name);
+      const baseRatio = Math.round(randomBetween(20, 80));
+      const baseWidth = Math.round(cell.width * (baseRatio / 100));
+      return {
+        base_color_name: baseColor.name,
+        base_color_label: baseColor.label,
+        base_hex: baseColor.hex,
+        base_rgb: baseColor.rgb,
+        secondary_color_name: secondary.name,
+        secondary_color_label: secondary.label,
+        secondary_hex: secondary.hex,
+        secondary_rgb: secondary.rgb,
+        base_ratio: baseRatio,
+        secondary_ratio: 100 - baseRatio,
+        base_width: baseWidth
+      };
+    }
+
+    function buildTruthState() {
+      generationIndex += 1;
+      const createdAt = nowIso();
+      const interferenceKey = interferenceSelect.value;
+      const interference = getInterferenceConfig();
+      currentTruth = [];
+
+      for (let row = 0; row < gridSize; row += 1) {
+        for (let col = 0; col < gridSize; col += 1) {
+          const color = randomColor();
+          const cell = {
+            generation_id: generationIndex,
+            created_at: createdAt,
+            cell_id: getCellId(row, col),
+            row,
+            col,
+            x: col * cellSize,
+            y: row * cellSize,
+            width: cellSize,
+            height: cellSize,
+            truth_color_name: color.name,
+            truth_color_label: color.label,
+            truth_hex: color.hex,
+            truth_rgb: color.rgb.join('|'),
+            interference_key: interferenceKey,
+            interference_label: interference.label,
+            noise_level: interference.noiseLevel,
+            border_width: interference.borderWidth,
+            capture_offset_x: interference.captureOffsetX,
+            capture_offset_y: interference.captureOffsetY,
+            overlay: interference.overlay,
+            patch_mode: interference.patchMode,
+            truth_rule: interference.truthRule,
+            patch_ratio_in_roi: interference.patchRatioInRoi,
+            base_ratio: 100,
+            secondary_ratio: 0,
+            secondary_color_name: '',
+            secondary_color_label: ''
+          };
+          if (interference.twoColorMode) {
+            cell.two_color = createTwoColorSegments(cell, color);
+            const majorityIsBase = cell.two_color.base_ratio >= cell.two_color.secondary_ratio;
+            cell.truth_color_name = majorityIsBase ? cell.two_color.base_color_name : cell.two_color.secondary_color_name;
+            cell.truth_color_label = majorityIsBase ? cell.two_color.base_color_label : cell.two_color.secondary_color_label;
+            cell.truth_hex = majorityIsBase ? cell.two_color.base_hex : cell.two_color.secondary_hex;
+            cell.truth_rgb = (majorityIsBase ? cell.two_color.base_rgb : cell.two_color.secondary_rgb).join('|');
+            cell.base_ratio = cell.two_color.base_ratio;
+            cell.secondary_ratio = cell.two_color.secondary_ratio;
+            cell.secondary_color_name = cell.two_color.secondary_color_name;
+            cell.secondary_color_label = cell.two_color.secondary_color_label;
+          }
+          cell.noise_dots = createNoiseDots(cell, interference);
+          cell.patch = createPatch(cell, color, interference);
+          if (cell.patch) {
+            cell.patch_ratio_in_roi = cell.patch.ratio_in_roi;
+            cell.secondary_color_name = cell.patch.name;
+            cell.secondary_color_label = cell.patch.label;
+          }
+          currentTruth.push(cell);
+        }
+      }
+
+      truthLog.push(...currentTruth.map(cell => ({ ...cell })));
+      drawGrid();
+      latestCaptureRows = [];
+      renderResultGrid();
+      renderTruthLog();
+      updateMetrics();
+    }
+
+    function drawGrid(showCaptureGuides = true) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      currentTruth.forEach(cell => {
+        if (cell.two_color) {
+          drawTwoColorCell(cell);
+        } else {
+          ctx.fillStyle = cell.truth_hex;
+          ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
+        }
+        drawNoise(cell);
+        drawPatch(cell);
+        drawOverlay(cell);
+        ctx.strokeStyle = '#111827';
+        ctx.lineWidth = cell.border_width || 3;
+        ctx.setLineDash([]);
+        ctx.strokeRect(cell.x, cell.y, cell.width, cell.height);
+        if (showCaptureGuides) {
+          drawCaptureGuide(cell);
+        }
+      });
+    }
+
+    function drawTwoColorCell(cell) {
+      ctx.fillStyle = cell.two_color.base_hex;
+      ctx.fillRect(cell.x, cell.y, cell.two_color.base_width, cell.height);
+      ctx.fillStyle = cell.two_color.secondary_hex;
+      ctx.fillRect(cell.x + cell.two_color.base_width, cell.y, cell.width - cell.two_color.base_width, cell.height);
+    }
+
+    function drawOverlay(cell) {
+      if (!cell.overlay) {
+        return;
+      }
+
+      ctx.fillStyle = cell.overlay;
+      ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
+    }
+
+    function drawPatch(cell) {
+      if (!cell.patch) {
+        return;
+      }
+
+      ctx.fillStyle = cell.patch.hex;
+      ctx.fillRect(cell.patch.x, cell.patch.y, cell.patch.width, cell.patch.height);
+      ctx.save();
+      ctx.strokeStyle = '#dc2626';
+      ctx.lineWidth = 4;
+      ctx.setLineDash([]);
+      ctx.strokeRect(cell.patch.x, cell.patch.y, cell.patch.width, cell.patch.height);
+      ctx.restore();
+    }
+
+    function drawNoise(cell) {
+      if (!cell.noise_dots || !cell.noise_dots.length) {
+        return;
+      }
+
+      cell.noise_dots.forEach(dot => {
+        ctx.fillStyle = dot.color;
+        ctx.fillRect(dot.x, dot.y, dot.size, dot.size);
+      });
+    }
+
+    function drawCaptureGuide(cell) {
+      const rect = getCaptureRect(cell);
+      ctx.save();
+      ctx.setLineDash([8, 6]);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.94)';
+      ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = 'rgba(17, 24, 39, 0.82)';
+      ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+      ctx.restore();
+    }
+
+    function rgbDistance(a, b) {
+      return Math.sqrt(
+        ((a[0] - b[0]) ** 2) +
+        ((a[1] - b[1]) ** 2) +
+        ((a[2] - b[2]) ** 2)
+      );
+    }
+
+    function detectNearestColor(rgb) {
+      let best = palette[0];
+      let bestDistance = Number.POSITIVE_INFINITY;
+
+      palette.forEach(color => {
+        const distance = rgbDistance(rgb, color.rgb);
+        if (distance < bestDistance) {
+          best = color;
+          bestDistance = distance;
+        }
+      });
+
+      return { ...best, distance: bestDistance };
+    }
+
+    function getCaptureRect(cell) {
+      const width = Math.floor(cell.width * captureRatio);
+      const height = Math.floor(cell.height * captureRatio);
+      const offsetX = Math.floor(cell.width * (cell.capture_offset_x || 0));
+      const offsetY = Math.floor(cell.height * (cell.capture_offset_y || 0));
+      const minX = Math.floor(cell.x);
+      const minY = Math.floor(cell.y);
+      const maxX = Math.floor(cell.x + cell.width - width);
+      const maxY = Math.floor(cell.y + cell.height - height);
+      const x = Math.min(maxX, Math.max(minX, Math.floor(cell.x + (cell.width - width) / 2 + offsetX)));
+      const y = Math.min(maxY, Math.max(minY, Math.floor(cell.y + (cell.height - height) / 2 + offsetY)));
+      return {
+        x,
+        y,
+        width,
+        height
+      };
+    }
+
+    function getFullCellRect(cell) {
+      return {
+        x: Math.floor(cell.x),
+        y: Math.floor(cell.y),
+        width: Math.floor(cell.width),
+        height: Math.floor(cell.height)
+      };
+    }
+
+    function getBlockRect(cell, algorithm) {
+      if (algorithm === 'fullAverage') {
+        return getFullCellRect(cell);
+      }
+
+      return getCaptureRect(cell);
+    }
+
+    function getImageBlock(rect) {
+      return ctx.getImageData(rect.x, rect.y, rect.width, rect.height);
+    }
+
+    function averageRgbFromImage(imageData) {
+      const data = imageData.data;
+      let r = 0;
+      let g = 0;
+      let b = 0;
+      let count = 0;
+
+      for (let index = 0; index < data.length; index += 4) {
+        r += data[index];
+        g += data[index + 1];
+        b += data[index + 2];
+        count += 1;
+      }
+
+      return [
+        Math.round(r / count),
+        Math.round(g / count),
+        Math.round(b / count)
+      ];
+    }
+
+    function detectByPaletteVote(imageData) {
+      const data = imageData.data;
+      const votes = new Map(palette.map(color => [color.name, 0]));
+      let total = 0;
+
+      for (let index = 0; index < data.length; index += 4) {
+        const rgb = [data[index], data[index + 1], data[index + 2]];
+        const detected = detectNearestColor(rgb);
+        votes.set(detected.name, votes.get(detected.name) + 1);
+        total += 1;
+      }
+
+      let winnerName = palette[0].name;
+      let winnerVotes = 0;
+      votes.forEach((voteCount, colorName) => {
+        if (voteCount > winnerVotes) {
+          winnerName = colorName;
+          winnerVotes = voteCount;
+        }
+      });
+
+      const winner = palette.find(color => color.name === winnerName);
+      return {
+        rgb: winner.rgb,
+        detected: { ...winner, distance: 0 },
+        confidence: total ? winnerVotes / total : 0
+      };
+    }
+
+    function analyzeColorBlock(cell, algorithm) {
+      const rect = getBlockRect(cell, algorithm);
+      const imageData = getImageBlock(rect);
+
+      if (algorithm === 'paletteVote') {
+        return {
+          ...detectByPaletteVote(imageData),
+          rect
+        };
+      }
+
+      const rgb = averageRgbFromImage(imageData);
+      return {
+        rgb,
+        detected: detectNearestColor(rgb),
+        confidence: null,
+        rect
+      };
+    }
+
+    function readWeight(input, fallback) {
+      const value = Number.parseFloat(input.value);
+      return Number.isFinite(value) && value >= 0 ? value : fallback;
+    }
+
+    function getWeightConfig() {
+      return {
+        centerAverage: readWeight(weightCenterInput, 33),
+        fullAverage: readWeight(weightFullInput, 33),
+        paletteVote: readWeight(weightVoteInput, 34)
+      };
+    }
+
+    function getWeightTotal(weights) {
+      return weights.centerAverage + weights.fullAverage + weights.paletteVote;
+    }
+
+    function updateWeightTotal() {
+      const weights = getWeightConfig();
+      const total = getWeightTotal(weights);
+      weightTotalEl.textContent = `合計 ${total.toFixed(0)}%`;
+      weightTotalEl.classList.toggle('warn', Math.round(total) !== 100);
+    }
+
+    function analyzeWeightedEnsemble(cell) {
+      const weights = getWeightConfig();
+      const sourceResults = {
+        centerAverage: analyzeColorBlock(cell, 'centerAverage'),
+        fullAverage: analyzeColorBlock(cell, 'fullAverage'),
+        paletteVote: analyzeColorBlock(cell, 'paletteVote')
+      };
+      const scores = new Map(palette.map(color => [color.name, 0]));
+
+      Object.entries(sourceResults).forEach(([algorithm, result]) => {
+        const currentScore = scores.get(result.detected.name) || 0;
+        scores.set(result.detected.name, currentScore + weights[algorithm]);
+      });
+
+      let winnerName = palette[0].name;
+      let winnerScore = -1;
+      scores.forEach((score, colorName) => {
+        if (score > winnerScore) {
+          winnerName = colorName;
+          winnerScore = score;
+        }
+      });
+
+      const winner = palette.find(color => color.name === winnerName);
+      const total = getWeightTotal(weights) || 100;
+      const confidence = winnerScore / total;
+      const center = sourceResults.centerAverage;
+
+      return {
+        rgb: winner.rgb,
+        detected: { ...winner, distance: 0 },
+        confidence,
+        rect: center.rect,
+        weights,
+        sourceResults,
+        scoreBreakdown: Array.from(scores.entries())
+          .filter(([, score]) => score > 0)
+          .map(([colorName, score]) => `${colorName}:${score}`)
+          .join('|')
+      };
+    }
+
+    function scanGrid() {
+      if (!currentTruth.length) {
+        buildTruthState();
+      }
+
+      captureIndex += 1;
+      const capturedAt = nowIso();
+      const algorithm = selectedAlgorithm;
+      const rowsForThisCapture = [];
+
+      drawGrid(false);
+      currentTruth.forEach(cell => {
+        const analysis = algorithm === 'weightedEnsemble'
+          ? analyzeWeightedEnsemble(cell)
+          : analyzeColorBlock(cell, algorithm);
+        const matched = analysis.detected.name === cell.truth_color_name;
+        const row = {
+          capture_id: captureIndex,
+          captured_at: capturedAt,
+          generation_id: cell.generation_id,
+          cell_id: cell.cell_id,
+          block_x: analysis.rect.x,
+          block_y: analysis.rect.y,
+          block_width: analysis.rect.width,
+          block_height: analysis.rect.height,
+          algorithm,
+          algorithm_label: algorithmLabels[algorithm],
+          interference_key: cell.interference_key,
+          interference_label: cell.interference_label,
+          noise_level: cell.noise_level,
+          border_width: cell.border_width,
+          capture_offset_x: cell.capture_offset_x,
+          capture_offset_y: cell.capture_offset_y,
+          overlay: cell.overlay || '',
+          patch_mode: cell.patch_mode,
+          patch_color: cell.patch ? cell.patch.label : '',
+          truth_rule: cell.truth_rule,
+          patch_ratio_in_roi: cell.patch_ratio_in_roi,
+          base_ratio: cell.base_ratio,
+          secondary_ratio: cell.secondary_ratio,
+          secondary_color_name: cell.secondary_color_name,
+          secondary_color_label: cell.secondary_color_label,
+          truth_color_name: cell.truth_color_name,
+          truth_color_label: cell.truth_color_label,
+          truth_hex: cell.truth_hex,
+          observed_r: analysis.rgb[0],
+          observed_g: analysis.rgb[1],
+          observed_b: analysis.rgb[2],
+          detected_color_name: analysis.detected.name,
+          detected_color_label: analysis.detected.label,
+          detected_hex: analysis.detected.hex,
+          color_distance: analysis.detected.distance.toFixed(2),
+          vote_confidence: analysis.confidence === null ? '' : (analysis.confidence * 100).toFixed(1),
+          matched
+        };
+
+        captureLog.push(row);
+        rowsForThisCapture.push(row);
+
+        if (algorithm === 'weightedEnsemble') {
+          weightedDecisionLog.push(buildWeightedDecisionRow(row, analysis));
+        }
+      });
+
+      drawGrid(true);
+      latestCaptureRows = rowsForThisCapture;
+      renderResultGrid();
+      renderLog();
+      renderWeightedLog();
+      updateMetrics();
+    }
+
+    function updateMetrics() {
+      truthCountEl.textContent = truthLog.length.toString();
+      captureCountEl.textContent = captureLog.length.toString();
+      runningTextEl.textContent = generateTimer || scanTimer ? '執行中' : '停止';
+
+      if (!captureLog.length) {
+        accuracyTextEl.textContent = '-';
+        return;
+      }
+
+      const passCount = captureLog.filter(row => row.matched).length;
+      accuracyTextEl.textContent = `${((passCount / captureLog.length) * 100).toFixed(1)}%`;
+    }
+
+    function buildWeightedDecisionRow(row, analysis) {
+      const center = analysis.sourceResults.centerAverage;
+      const full = analysis.sourceResults.fullAverage;
+      const vote = analysis.sourceResults.paletteVote;
+
+      return {
+        decision_id: weightedDecisionLog.length + 1,
+        capture_id: row.capture_id,
+        captured_at: row.captured_at,
+        generation_id: row.generation_id,
+        cell_id: row.cell_id,
+        truth_color_name: row.truth_color_name,
+        truth_color_label: row.truth_color_label,
+        final_detected_color_name: row.detected_color_name,
+        final_detected_color_label: row.detected_color_label,
+        matched: row.matched,
+        weight_center_average: analysis.weights.centerAverage,
+        weight_full_average: analysis.weights.fullAverage,
+        weight_palette_vote: analysis.weights.paletteVote,
+        center_average_result: center.detected.name,
+        center_average_label: center.detected.label,
+        center_average_rgb: center.rgb.join('|'),
+        full_average_result: full.detected.name,
+        full_average_label: full.detected.label,
+        full_average_rgb: full.rgb.join('|'),
+        palette_vote_result: vote.detected.name,
+        palette_vote_label: vote.detected.label,
+        palette_vote_confidence: (vote.confidence * 100).toFixed(1),
+        final_score: row.vote_confidence,
+        score_breakdown: analysis.scoreBreakdown,
+        interference_key: row.interference_key,
+        interference_label: row.interference_label,
+        noise_level: row.noise_level,
+        border_width: row.border_width,
+        capture_offset_x: row.capture_offset_x,
+        capture_offset_y: row.capture_offset_y,
+        overlay: row.overlay,
+        patch_mode: row.patch_mode,
+        patch_color: row.patch_color,
+        truth_rule: row.truth_rule,
+        patch_ratio_in_roi: row.patch_ratio_in_roi,
+        base_ratio: row.base_ratio,
+        secondary_ratio: row.secondary_ratio,
+        secondary_color_name: row.secondary_color_name,
+        secondary_color_label: row.secondary_color_label
+      };
+    }
+
+    function renderLog() {
+      const recentRows = captureLog.slice(-90).reverse();
+
+      if (!recentRows.length) {
+        logBody.innerHTML = '<tr><td colspan="10">尚未掃描。</td></tr>';
+        return;
+      }
+
+      logBody.innerHTML = recentRows.map((row, index) => {
+        const displayIndex = captureLog.length - index;
+        const observedRgb = `${row.observed_r}, ${row.observed_g}, ${row.observed_b}`;
+        const resultClass = row.matched ? 'pass' : 'fail';
+        const resultText = row.matched ? '一致' : '不一致';
+
+        return `
+          <tr>
+            <td>${displayIndex}</td>
+            <td>${row.captured_at}</td>
+            <td>${row.cell_id}</td>
+            <td>${row.block_x}, ${row.block_y}, ${row.block_width}x${row.block_height}</td>
+            <td>${row.algorithm_label}</td>
+            <td>${row.interference_label}</td>
+            <td><span class="swatch" style="background:${row.truth_hex}"></span>${row.truth_color_label}</td>
+            <td>${observedRgb}</td>
+            <td><span class="swatch" style="background:${row.detected_hex}"></span>${row.detected_color_label}</td>
+            <td class="${resultClass}">${resultText}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderWeightedLog() {
+      const recentRows = weightedDecisionLog.slice(-90).reverse();
+
+      if (!recentRows.length) {
+        weightedLogBody.innerHTML = '<tr><td colspan="10">尚未產生綜合加權紀錄。</td></tr>';
+        return;
+      }
+
+      weightedLogBody.innerHTML = recentRows.map(row => {
+        const resultClass = row.matched ? 'pass' : 'fail';
+        const resultText = row.matched ? '一致' : '不一致';
+        const weights = `${row.weight_center_average}/${row.weight_full_average}/${row.weight_palette_vote}`;
+        const sources = `中:${row.center_average_label} / 全:${row.full_average_label} / 投:${row.palette_vote_label}`;
+
+        return `
+          <tr>
+            <td>${row.decision_id}</td>
+            <td>${row.captured_at}</td>
+            <td>${row.cell_id}</td>
+            <td>${row.truth_color_label}</td>
+            <td>${row.final_detected_color_label}</td>
+            <td>${weights}</td>
+            <td>${sources}</td>
+            <td>${row.final_score}%</td>
+            <td>${row.interference_label}</td>
+            <td class="${resultClass}">${resultText}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderTruthLog() {
+      const recentRows = truthLog.slice(-90).reverse();
+
+      if (!recentRows.length) {
+        truthLogBody.innerHTML = '<tr><td colspan="9">尚未產生紀錄。</td></tr>';
+        return;
+      }
+
+      truthLogBody.innerHTML = recentRows.map((row, index) => {
+        const displayIndex = truthLog.length - index;
+        const secondary = row.secondary_color_label || row.patch?.label || '-';
+        const ratio = row.truth_rule === 'area_majority'
+          ? `${row.base_ratio}% / ${row.secondary_ratio}%`
+          : (row.patch_ratio_in_roi ? `patch ${(row.patch_ratio_in_roi * 100).toFixed(0)}% ROI` : '-');
+
+        return `
+          <tr>
+            <td>${displayIndex}</td>
+            <td>${row.created_at}</td>
+            <td>${row.generation_id}</td>
+            <td>${row.cell_id}</td>
+            <td>${row.truth_rule}</td>
+            <td><span class="swatch" style="background:${row.truth_hex}"></span>${row.truth_color_label}</td>
+            <td>${row.interference_label}</td>
+            <td>${secondary}</td>
+            <td>${ratio}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function getReadableTextColor(hex) {
+      const r = Number.parseInt(hex.slice(1, 3), 16);
+      const g = Number.parseInt(hex.slice(3, 5), 16);
+      const b = Number.parseInt(hex.slice(5, 7), 16);
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
+      return luminance > 150 ? '#111827' : '#ffffff';
+    }
+
+    function renderResultGrid() {
+      if (!latestCaptureRows.length) {
+        resultGrid.innerHTML = Array.from({ length: 9 }).map((_, index) => `
+          <div class="result-cell empty">
+            <div class="cell-id">r${Math.floor(index / 3) + 1}c${(index % 3) + 1}</div>
+            <div class="cell-meta">尚未掃描</div>
+          </div>
+        `).join('');
+        return;
+      }
+
+      resultGrid.innerHTML = latestCaptureRows.map(row => {
+        const textColor = getReadableTextColor(row.detected_hex);
+        const statusText = row.matched ? '一致' : '不一致';
+        const confidenceText = row.algorithm === 'weightedEnsemble'
+          ? `決策 ${row.vote_confidence}%`
+          : (row.vote_confidence ? `投票 ${row.vote_confidence}%` : `距離 ${row.color_distance}`);
+
+        return `
+          <div class="result-cell" style="background:${row.detected_hex}; color:${textColor}">
+            <div class="cell-id">${row.cell_id}</div>
+            <div class="cell-color">${row.detected_color_label}</div>
+            <div class="cell-rgb" style="color:${textColor}">${row.observed_r}, ${row.observed_g}, ${row.observed_b}</div>
+            <div class="cell-meta" style="color:${textColor}">${confidenceText}</div>
+            <div class="cell-status" style="color:${textColor}">${statusText}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function getIntervalMs(input) {
+      const seconds = Number.parseInt(input.value, 10);
+      return Math.max(1, Number.isFinite(seconds) ? seconds : 1) * 1000;
+    }
+
+    function setAlgorithm(algorithm) {
+      selectedAlgorithm = algorithm;
+      algorithmButtons.querySelectorAll('button').forEach(button => {
+        button.classList.toggle('active', button.dataset.algorithm === algorithm);
+      });
+      weightPanel.classList.toggle('is-hidden', algorithm !== 'weightedEnsemble');
+      updateWeightTotal();
+    }
+
+    function startTimers() {
+      stopTimers();
+      buildTruthState();
+      scanGrid();
+      generateTimer = window.setInterval(buildTruthState, getIntervalMs(generateSecondsInput));
+      scanTimer = window.setInterval(scanGrid, getIntervalMs(scanSecondsInput));
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      updateMetrics();
+    }
+
+    function stopTimers() {
+      if (generateTimer) {
+        window.clearInterval(generateTimer);
+      }
+      if (scanTimer) {
+        window.clearInterval(scanTimer);
+      }
+      generateTimer = null;
+      scanTimer = null;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      updateMetrics();
+    }
+
+    function clearRecords() {
+      stopTimers();
+      truthLog = [];
+      captureLog = [];
+      weightedDecisionLog = [];
+      currentTruth = [];
+      latestCaptureRows = [];
+      generationIndex = 0;
+      captureIndex = 0;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      renderResultGrid();
+      renderLog();
+      renderWeightedLog();
+      renderTruthLog();
+      updateMetrics();
+    }
+
+    function csvEscape(value) {
+      const text = String(value ?? '');
+      return `"${text.replaceAll('"', '""')}"`;
+    }
+
+    function exportCsv() {
+      const headers = [
+        'capture_id',
+        'captured_at',
+        'generation_id',
+        'cell_id',
+        'block_x',
+        'block_y',
+        'block_width',
+        'block_height',
+        'algorithm',
+        'algorithm_label',
+        'interference_key',
+        'interference_label',
+        'noise_level',
+        'border_width',
+        'capture_offset_x',
+        'capture_offset_y',
+        'overlay',
+        'patch_mode',
+        'patch_color',
+        'truth_rule',
+        'patch_ratio_in_roi',
+        'base_ratio',
+        'secondary_ratio',
+        'secondary_color_name',
+        'secondary_color_label',
+        'truth_color_name',
+        'truth_color_label',
+        'truth_hex',
+        'observed_r',
+        'observed_g',
+        'observed_b',
+        'detected_color_name',
+        'detected_color_label',
+        'detected_hex',
+        'color_distance',
+        'vote_confidence',
+        'matched'
+      ];
+      const csvRows = [headers.join(',')];
+
+      captureLog.forEach(row => {
+        csvRows.push(headers.map(header => csvEscape(row[header])).join(','));
+      });
+
+      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `mode1-color-grid-capture-${new Date().toISOString().replaceAll(':', '-')}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportWeightedCsv() {
+      const headers = [
+        'decision_id',
+        'capture_id',
+        'captured_at',
+        'generation_id',
+        'cell_id',
+        'truth_color_name',
+        'truth_color_label',
+        'final_detected_color_name',
+        'final_detected_color_label',
+        'matched',
+        'weight_center_average',
+        'weight_full_average',
+        'weight_palette_vote',
+        'center_average_result',
+        'center_average_label',
+        'center_average_rgb',
+        'full_average_result',
+        'full_average_label',
+        'full_average_rgb',
+        'palette_vote_result',
+        'palette_vote_label',
+        'palette_vote_confidence',
+        'final_score',
+        'score_breakdown',
+        'interference_key',
+        'interference_label',
+        'noise_level',
+        'border_width',
+        'capture_offset_x',
+        'capture_offset_y',
+        'overlay',
+        'patch_mode',
+        'patch_color',
+        'truth_rule',
+        'patch_ratio_in_roi',
+        'base_ratio',
+        'secondary_ratio',
+        'secondary_color_name',
+        'secondary_color_label'
+      ];
+      const csvRows = [headers.join(',')];
+
+      weightedDecisionLog.forEach(row => {
+        csvRows.push(headers.map(header => csvEscape(row[header])).join(','));
+      });
+
+      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `mode1-weighted-decision-log-${new Date().toISOString().replaceAll(':', '-')}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    startBtn.addEventListener('click', startTimers);
+    stopBtn.addEventListener('click', stopTimers);
+    generateOnceBtn.addEventListener('click', buildTruthState);
+    scanOnceBtn.addEventListener('click', scanGrid);
+    clearBtn.addEventListener('click', clearRecords);
+    exportBtn.addEventListener('click', exportCsv);
+    exportWeightedBtn.addEventListener('click', exportWeightedCsv);
+    interferenceSelect.addEventListener('change', buildTruthState);
+    recordTabs.forEach(tabButton => {
+      tabButton.addEventListener('click', () => {
+        const target = tabButton.dataset.recordTab;
+        recordTabs.forEach(button => button.classList.toggle('active', button === tabButton));
+        Object.entries(recordPanes).forEach(([key, pane]) => {
+          pane.classList.toggle('active', key === target);
+        });
+      });
+    });
+    algorithmButtons.addEventListener('click', event => {
+      const button = event.target.closest('button[data-algorithm]');
+      if (!button) {
+        return;
+      }
+      setAlgorithm(button.dataset.algorithm);
+    });
+    [weightCenterInput, weightFullInput, weightVoteInput].forEach(input => {
+      input.addEventListener('input', updateWeightTotal);
+    });
+
+    setAlgorithm(selectedAlgorithm);
+    renderResultGrid();
+    buildTruthState();
+  </script>
+</body>
+</html>
