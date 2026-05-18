@@ -27,6 +27,7 @@
       --ok: #087443;
       --warn: #9a3412;
       --visual-size: 360px;
+      --ui-scale: 1;
       --radius: 8px;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
@@ -51,16 +52,16 @@
       --accent-dark: #065f46;
     }
 
-    body[data-theme="contrast"] {
-      --bg: #101828;
-      --panel: #182230;
-      --text: #f9fafb;
-      --muted: #cbd5e1;
-      --line: #475467;
-      --accent: #facc15;
-      --accent-dark: #eab308;
-      --ok: #6ee7b7;
-      --warn: #fbbf24;
+    body[data-theme="vivid"] {
+      --bg: #fff8f1;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b5f72;
+      --line: #ffd0a8;
+      --accent: #f97316;
+      --accent-dark: #ea580c;
+      --ok: #0f9f6e;
+      --warn: #dc2626;
     }
 
     * {
@@ -75,9 +76,10 @@
     }
 
     .app {
-      width: min(1180px, calc(100% - 32px));
+      width: min(calc(1180px * var(--ui-scale)), calc(100% - 32px));
       margin: 0 auto;
       padding: 24px 0 40px;
+      font-size: calc(16px * var(--ui-scale));
     }
 
     header {
@@ -332,11 +334,7 @@
       background: #fbfcff;
       display: grid;
       gap: 8px;
-      grid-column: span 2;
-    }
-
-    .weight-panel.is-hidden {
-      display: none;
+      margin-top: 10px;
     }
 
     .weight-row {
@@ -350,6 +348,13 @@
     .weight-row input {
       min-height: 34px;
       padding: 6px 8px;
+    }
+
+    .weight-row input:disabled {
+      opacity: 1;
+      color: var(--text);
+      background: #f8fafc;
+      cursor: default;
     }
 
     .weight-total {
@@ -573,6 +578,13 @@
       border-radius: 999px;
     }
 
+    .chart-mode-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
     .analysis-summary {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -793,7 +805,7 @@
       <div>
         <h1>九宮格 Vision Benchmark</h1>
         <p class="subtitle">Mode 1 先測顏色：產生器負責改變九宮格，掃描器用自己的節奏讀取 canvas pixel，兩套紀錄最後再比對。</p>
-        <div class="brand-mark">Falo X Force Cheng 2026/5/18 · v0.03</div>
+        <div class="brand-mark">Falo X Force Cheng 2026/5/18 · v0.04</div>
       </div>
       <nav class="mode-tabs" aria-label="Benchmark modes">
         <button class="active" type="button" data-page-view="app">Mode 1 顏色</button>
@@ -827,24 +839,24 @@
             <button type="button" data-algorithm="weightedEnsemble">綜合加權</button>
           </div>
           <div class="hint">掃描器會先切成 9 個區塊，再用選定方法產生決策答案。</div>
-        </div>
 
-        <div id="weightPanel" class="weight-panel is-hidden">
-          <label>綜合加權比例</label>
-          <div class="weight-row">
-            <span>中央區域平均</span>
-            <input id="weightCenter" type="number" min="0" max="100" step="1" value="33">
+          <div id="weightPanel" class="weight-panel">
+            <label>決策權重比例</label>
+            <div class="weight-row">
+              <span>中央區域平均</span>
+              <input id="weightCenter" type="number" min="0" max="100" step="1" value="100">
+            </div>
+            <div class="weight-row">
+              <span>整格平均 RGB</span>
+              <input id="weightFull" type="number" min="0" max="100" step="1" value="0">
+            </div>
+            <div class="weight-row">
+              <span>主要顏色投票</span>
+              <input id="weightVote" type="number" min="0" max="100" step="1" value="0">
+            </div>
+            <div id="weightTotal" class="weight-total">合計 100%</div>
+            <div class="hint">單一演算法是綜合決策的特例；選綜合加權時才可調整比例。</div>
           </div>
-          <div class="weight-row">
-            <span>整格平均 RGB</span>
-            <input id="weightFull" type="number" min="0" max="100" step="1" value="33">
-          </div>
-          <div class="weight-row">
-            <span>主要顏色投票</span>
-            <input id="weightVote" type="number" min="0" max="100" step="1" value="34">
-          </div>
-          <div id="weightTotal" class="weight-total">合計 100%</div>
-          <div class="hint">綜合加權會另存 weighted decision log，方便後續交給 AI 分析與校正。</div>
         </div>
 
         <div class="field">
@@ -872,7 +884,7 @@
           <div id="themeButtons" class="compact-buttons" role="group" aria-label="版面配色">
             <button class="active" type="button" data-theme-choice="default">標準</button>
             <button type="button" data-theme-choice="lab">實驗綠</button>
-            <button type="button" data-theme-choice="contrast">高對比</button>
+            <button type="button" data-theme-choice="vivid">活力橘</button>
           </div>
           <div class="hint">示範同一套功能如何換成不同展示情境。</div>
         </div>
@@ -883,7 +895,7 @@
             <button id="zoomInBtn" type="button">＋放大視窗</button>
             <button id="zoomOutBtn" type="button">－縮小視窗</button>
           </div>
-          <div id="zoomText" class="hint">目前畫面尺度 360px。</div>
+          <div id="zoomText" class="hint">目前整體尺度 100%。</div>
         </div>
 
         <div class="button-row">
@@ -1038,7 +1050,11 @@
           <h2>分析圖表</h2>
           <div class="hint">把瀏覽器內的紀錄轉成可視化摘要，作為後續交給 AI 分析與校正的第一層觀察。</div>
         </div>
-        <button type="button" data-page-view="app">回到操作頁</button>
+        <div class="chart-mode-buttons">
+          <button class="active" type="button" data-chart-mode="mono">單色版</button>
+          <button type="button" data-chart-mode="color">多彩版</button>
+          <button type="button" data-page-view="app">回到操作頁</button>
+        </div>
       </div>
 
       <div id="analysisSummary" class="analysis-summary" aria-live="polite"></div>
@@ -1147,9 +1163,22 @@
           <div class="action-card"><b>2. 結束</b><span class="hint">停止定時任務，但保留目前畫面與紀錄，方便觀察結果。</span></div>
           <div class="action-card"><b>3. 產生一次</b><span class="hint">只刷新 Ground Truth，可用來控制單一測試樣本。</span></div>
           <div class="action-card"><b>4. 掃描一次</b><span class="hint">只做一次辨識，適合比對不同演算法或干擾條件。</span></div>
-          <div class="action-card"><b>5. 改變版面配色</b><span class="hint">提供標準、實驗綠、高對比三種展示風格。</span></div>
-          <div class="action-card"><b>＋ / － 視窗縮放</b><span class="hint">放大或縮小九宮格，用來示範畫面尺度對觀察與教學呈現的影響。</span></div>
+          <div class="action-card"><b>5. 改變版面配色</b><span class="hint">提供標準、實驗綠、活力橘三種白底展示風格。</span></div>
+          <div class="action-card"><b>＋ / － 視窗縮放</b><span class="hint">放大或縮小整個介面，用來示範 Computer Use 操作視野。</span></div>
         </div>
+      </div>
+
+      <div class="board-card">
+        <h3>鍵盤熱鍵</h3>
+        <div class="action-map">
+          <div class="action-card"><b>S：開始</b><span class="hint">start，啟動連續流程。</span></div>
+          <div class="action-card"><b>E：結束</b><span class="hint">end，停止連續流程。</span></div>
+          <div class="action-card"><b>G：產生一次</b><span class="hint">generate，刷新 Ground Truth。</span></div>
+          <div class="action-card"><b>C：掃描一次</b><span class="hint">capture，執行一次辨識。</span></div>
+          <div class="action-card"><b>T：切換配色</b><span class="hint">標準、實驗綠、活力橘輪流切換。</span></div>
+          <div class="action-card"><b>+ / -：整體縮放</b><span class="hint">放大或縮小整個操作介面。</span></div>
+        </div>
+        <p class="hint">這些熱鍵讓人類、鍵盤操作者與 AI Computer Use 都能用同一套明確任務控制 benchmark。</p>
       </div>
 
       <div class="detail-grid">
@@ -1244,6 +1273,7 @@ truth_color: secondary_color</pre>
     const interferenceChart = document.getElementById('interferenceChart');
     const truthColorChart = document.getElementById('truthColorChart');
     const confusionChart = document.getElementById('confusionChart');
+    const chartModeButtons = document.querySelectorAll('[data-chart-mode]');
     const recordTabs = document.querySelectorAll('[data-record-tab]');
     const pageViewButtons = document.querySelectorAll('[data-page-view]');
     const recordPanes = {
@@ -1277,7 +1307,13 @@ truth_color: secondary_color</pre>
     let generateTimer = null;
     let scanTimer = null;
     let latestCaptureRows = [];
-    let visualSize = 360;
+    let uiScale = 1;
+    let chartMode = 'mono';
+    let ensembleWeights = {
+      centerAverage: 33,
+      fullAverage: 33,
+      paletteVote: 34
+    };
 
     const algorithmLabels = {
       fullAverage: '整格平均 RGB',
@@ -1287,6 +1323,13 @@ truth_color: secondary_color</pre>
     };
 
     let selectedAlgorithm = 'centerAverage';
+
+    const algorithmWeightPresets = {
+      centerAverage: { centerAverage: 100, fullAverage: 0, paletteVote: 0 },
+      fullAverage: { centerAverage: 0, fullAverage: 100, paletteVote: 0 },
+      paletteVote: { centerAverage: 0, fullAverage: 0, paletteVote: 100 },
+      weightedEnsemble: ensembleWeights
+    };
 
     const interferencePresets = {
       none: {
@@ -1836,6 +1879,24 @@ truth_color: secondary_color</pre>
       };
     }
 
+    function applyWeightInputs(weights, editable) {
+      weightCenterInput.value = weights.centerAverage;
+      weightFullInput.value = weights.fullAverage;
+      weightVoteInput.value = weights.paletteVote;
+      [weightCenterInput, weightFullInput, weightVoteInput].forEach(input => {
+        input.disabled = !editable;
+      });
+      updateWeightTotal();
+    }
+
+    function getDecisionWeightsForAlgorithm(algorithm) {
+      if (algorithm === 'weightedEnsemble') {
+        return getWeightConfig();
+      }
+
+      return algorithmWeightPresets[algorithm] || algorithmWeightPresets.centerAverage;
+    }
+
     function getWeightTotal(weights) {
       return weights.centerAverage + weights.fullAverage + weights.paletteVote;
     }
@@ -1904,6 +1965,7 @@ truth_color: secondary_color</pre>
         const analysis = algorithm === 'weightedEnsemble'
           ? analyzeWeightedEnsemble(cell)
           : analyzeColorBlock(cell, algorithm);
+        const decisionWeights = getDecisionWeightsForAlgorithm(algorithm);
         const matched = analysis.detected.name === cell.truth_color_name;
         const row = {
           capture_id: captureIndex,
@@ -1942,6 +2004,9 @@ truth_color: secondary_color</pre>
           detected_hex: analysis.detected.hex,
           color_distance: analysis.detected.distance.toFixed(2),
           vote_confidence: analysis.confidence === null ? '' : (analysis.confidence * 100).toFixed(1),
+          weight_center_average: decisionWeights.centerAverage,
+          weight_full_average: decisionWeights.fullAverage,
+          weight_palette_vote: decisionWeights.paletteVote,
           matched
         };
 
@@ -2123,7 +2188,7 @@ truth_color: secondary_color</pre>
         const key = keyGetter(row);
         const label = labelGetter(row);
         if (!groups.has(key)) {
-          groups.set(key, { key, label, total: 0, matched: 0 });
+          groups.set(key, { key, label, total: 0, matched: 0, sample: row });
         }
         const group = groups.get(key);
         group.total += 1;
@@ -2138,7 +2203,24 @@ truth_color: secondary_color</pre>
         .sort((a, b) => b.total - a.total);
     }
 
-    function renderBarChart(target, rows, emptyText = '尚無資料，請先掃描一次。') {
+    function getPaletteColor(colorName) {
+      return palette.find(color => color.name === colorName)?.hex || '';
+    }
+
+    function getChartBarStyle(row, colorGetter) {
+      if (chartMode !== 'color' || !colorGetter) {
+        return '';
+      }
+
+      const color = colorGetter(row);
+      if (!color) {
+        return '';
+      }
+
+      return `background:${color}`;
+    }
+
+    function renderBarChart(target, rows, emptyText = '尚無資料，請先掃描一次。', colorGetter = null) {
       if (!rows.length) {
         target.innerHTML = `<div class="hint">${emptyText}</div>`;
         return;
@@ -2146,11 +2228,12 @@ truth_color: secondary_color</pre>
 
       target.innerHTML = rows.map(row => {
         const percent = Math.round(row.accuracy * 1000) / 10;
+        const style = getChartBarStyle(row, colorGetter);
         return `
           <div class="bar-row">
             <span>${row.label}</span>
             <div class="bar-track" aria-label="${row.label} ${percent}%">
-              <div class="bar-fill" style="width:${percent}%"></div>
+              <div class="bar-fill" style="width:${percent}%; ${style}"></div>
             </div>
             <strong>${percent}%</strong>
           </div>
@@ -2169,7 +2252,11 @@ truth_color: secondary_color</pre>
       });
 
       const rows = Array.from(groups.entries())
-        .map(([label, total]) => ({ label, total }))
+        .map(([key, total]) => {
+          const [truthLabel, detectedLabel] = key.split(' -> ');
+          const sample = misses.find(row => row.truth_color_label === truthLabel && row.detected_color_label === detectedLabel);
+          return { label: key, total, sample };
+        })
         .sort((a, b) => b.total - a.total)
         .slice(0, 8);
 
@@ -2181,11 +2268,15 @@ truth_color: secondary_color</pre>
       const max = Math.max(...rows.map(row => row.total));
       confusionChart.innerHTML = rows.map(row => {
         const percent = max ? (row.total / max) * 100 : 0;
+        const color = chartMode === 'color' && row.sample
+          ? `linear-gradient(90deg, ${row.sample.truth_hex}, ${row.sample.detected_hex})`
+          : '';
+        const style = color ? `background:${color}` : '';
         return `
           <div class="bar-row">
             <span>${row.label}</span>
             <div class="bar-track" aria-label="${row.label} ${row.total} 筆">
-              <div class="bar-fill" style="width:${percent}%"></div>
+              <div class="bar-fill" style="width:${percent}%; ${style}"></div>
             </div>
             <strong>${row.total}</strong>
           </div>
@@ -2223,7 +2314,9 @@ truth_color: secondary_color</pre>
       );
       renderBarChart(
         truthColorChart,
-        buildGroupedStats(captureLog, row => row.truth_color_name, row => row.truth_color_label)
+        buildGroupedStats(captureLog, row => row.truth_color_name, row => row.truth_color_label),
+        '尚無顏色資料，請先掃描一次。',
+        row => getPaletteColor(row.key)
       );
       renderConfusionChart();
     }
@@ -2276,8 +2369,8 @@ truth_color: secondary_color</pre>
       algorithmButtons.querySelectorAll('button').forEach(button => {
         button.classList.toggle('active', button.dataset.algorithm === algorithm);
       });
-      weightPanel.classList.toggle('is-hidden', algorithm !== 'weightedEnsemble');
-      updateWeightTotal();
+      const editable = algorithm === 'weightedEnsemble';
+      applyWeightInputs(editable ? ensembleWeights : algorithmWeightPresets[algorithm], editable);
     }
 
     function setTheme(theme) {
@@ -2292,10 +2385,75 @@ truth_color: secondary_color</pre>
       });
     }
 
-    function setVisualSize(nextSize) {
-      visualSize = Math.min(520, Math.max(300, nextSize));
-      document.documentElement.style.setProperty('--visual-size', `${visualSize}px`);
-      zoomText.textContent = `目前畫面尺度 ${visualSize}px。`;
+    function setUiScale(nextScale) {
+      uiScale = Math.min(1.18, Math.max(0.86, nextScale));
+      document.documentElement.style.setProperty('--ui-scale', uiScale.toFixed(2));
+      zoomText.textContent = `目前整體尺度 ${Math.round(uiScale * 100)}%。`;
+    }
+
+    function cycleTheme() {
+      const themes = ['default', 'lab', 'vivid'];
+      const current = document.body.dataset.theme || 'default';
+      const next = themes[(themes.indexOf(current) + 1) % themes.length];
+      setTheme(next);
+    }
+
+    function setChartMode(mode) {
+      chartMode = mode;
+      chartModeButtons.forEach(button => {
+        button.classList.toggle('active', button.dataset.chartMode === mode);
+      });
+      renderAnalysis();
+    }
+
+    function isTypingTarget(target) {
+      return ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName) || target.isContentEditable;
+    }
+
+    function handleHotkey(event) {
+      if (event.metaKey || event.ctrlKey || event.altKey || isTypingTarget(event.target)) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      if (key === 's') {
+        event.preventDefault();
+        startTimers();
+      } else if (key === 'e') {
+        event.preventDefault();
+        stopTimers();
+      } else if (key === 'g') {
+        event.preventDefault();
+        buildTruthState();
+      } else if (key === 'c') {
+        event.preventDefault();
+        scanGrid();
+      } else if (key === 't') {
+        event.preventDefault();
+        cycleTheme();
+      } else if (event.key === '+' || event.key === '=') {
+        event.preventDefault();
+        setUiScale(uiScale + 0.06);
+      } else if (event.key === '-') {
+        event.preventDefault();
+        setUiScale(uiScale - 0.06);
+      } else if (key === 'a') {
+        event.preventDefault();
+        setPageView('analysis');
+      } else if (key === 'h' || event.key === '?') {
+        event.preventDefault();
+        setPageView('project');
+      }
+    }
+
+    function setPageView(view) {
+      document.body.dataset.view = view;
+      if (view === 'analysis') {
+        renderAnalysis();
+      }
+      pageViewButtons.forEach(button => {
+        button.classList.toggle('active', button.dataset.pageView === view && button.closest('nav'));
+      });
     }
 
     function startTimers() {
@@ -2384,6 +2542,9 @@ truth_color: secondary_color</pre>
         'detected_hex',
         'color_distance',
         'vote_confidence',
+        'weight_center_average',
+        'weight_full_average',
+        'weight_palette_vote',
         'matched'
       ];
       const csvRows = [headers.join(',')];
@@ -2472,14 +2633,7 @@ truth_color: secondary_color</pre>
     interferenceSelect.addEventListener('change', buildTruthState);
     pageViewButtons.forEach(viewButton => {
       viewButton.addEventListener('click', () => {
-        const view = viewButton.dataset.pageView;
-        document.body.dataset.view = view;
-        if (view === 'analysis') {
-          renderAnalysis();
-        }
-        pageViewButtons.forEach(button => {
-          button.classList.toggle('active', button.dataset.pageView === view && button.closest('nav'));
-        });
+        setPageView(viewButton.dataset.pageView);
       });
     });
     recordTabs.forEach(tabButton => {
@@ -2499,7 +2653,13 @@ truth_color: secondary_color</pre>
       setAlgorithm(button.dataset.algorithm);
     });
     [weightCenterInput, weightFullInput, weightVoteInput].forEach(input => {
-      input.addEventListener('input', updateWeightTotal);
+      input.addEventListener('input', () => {
+        if (selectedAlgorithm === 'weightedEnsemble') {
+          ensembleWeights = getWeightConfig();
+          algorithmWeightPresets.weightedEnsemble = ensembleWeights;
+        }
+        updateWeightTotal();
+      });
     });
     themeButtons.addEventListener('click', event => {
       const button = event.target.closest('button[data-theme-choice]');
@@ -2508,12 +2668,17 @@ truth_color: secondary_color</pre>
       }
       setTheme(button.dataset.themeChoice);
     });
-    zoomInBtn.addEventListener('click', () => setVisualSize(visualSize + 40));
-    zoomOutBtn.addEventListener('click', () => setVisualSize(visualSize - 40));
+    zoomInBtn.addEventListener('click', () => setUiScale(uiScale + 0.06));
+    zoomOutBtn.addEventListener('click', () => setUiScale(uiScale - 0.06));
+    chartModeButtons.forEach(button => {
+      button.addEventListener('click', () => setChartMode(button.dataset.chartMode));
+    });
+    document.addEventListener('keydown', handleHotkey);
 
     setAlgorithm(selectedAlgorithm);
     setTheme('default');
-    setVisualSize(visualSize);
+    setUiScale(uiScale);
+    setChartMode(chartMode);
     renderResultGrid();
     buildTruthState();
     renderAnalysis();

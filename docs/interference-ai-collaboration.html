@@ -175,6 +175,22 @@ truth_color: secondary_color</pre>
     </section>
 
     <section class="panel">
+      <h2>決策權重框架</h2>
+      <p class="note">四種演算法都用同一個權重框架呈現，版面高度穩定，CSV 也更容易交給 AI 分析。</p>
+      <table>
+        <thead>
+          <tr><th>模式</th><th>中央區域平均</th><th>整格平均 RGB</th><th>主要顏色投票</th><th>教學意義</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>中央區域平均</td><td>100</td><td>0</td><td>0</td><td>單一方法是綜合決策的特例</td></tr>
+          <tr><td>整格平均 RGB</td><td>0</td><td>100</td><td>0</td><td>只相信整格平均</td></tr>
+          <tr><td>主要顏色投票</td><td>0</td><td>0</td><td>100</td><td>只相信 pixel 投票</td></tr>
+          <tr><td>綜合加權</td><td>33</td><td>33</td><td>34</td><td>三種方法共同決策，且可調整</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel">
       <h2>分析圖表與操作案件</h2>
       <p class="note">分析圖表不是另一個演算法，而是把 capture_log 與 weighted_decision_log 轉成可教、可看、也方便交給 AI 的摘要。</p>
       <table>
@@ -186,10 +202,30 @@ truth_color: secondary_color</pre>
           <tr><td>干擾條件準確率</td><td>capture_log.interference_key</td><td>找出最容易造成錯判的干擾</td></tr>
           <tr><td>真實顏色命中率</td><td>capture_log.truth_color_name</td><td>檢查顏色是否有系統性誤判</td></tr>
           <tr><td>錯判對照</td><td>truth -> detected</td><td>讓 AI 分析錯誤路徑與修正方向</td></tr>
+          <tr><td>單色版 / 多彩版</td><td>圖表顯示模式</td><td>正式報告用單色，教學解釋用多彩配對</td></tr>
           <tr><td>開始 / 結束</td><td>啟動或停止定時任務</td><td>建立或凍結連續觀測資料</td></tr>
           <tr><td>產生一次 / 掃描一次</td><td>單次 Ground Truth 或單次辨識</td><td>控制樣本並比較演算法</td></tr>
-          <tr><td>三種版面配色</td><td>標準、實驗綠、高對比</td><td>示範同一功能在不同教學場景的呈現</td></tr>
-          <tr><td>＋ / － 視窗縮放</td><td>調整九宮格尺度</td><td>示範畫面大小對觀察與展示的影響</td></tr>
+          <tr><td>三種版面配色</td><td>標準、實驗綠、活力橘</td><td>示範同一功能在不同教學場景的呈現</td></tr>
+          <tr><td>＋ / － 視窗縮放</td><td>調整整個介面</td><td>示範畫面大小對觀察、展示與 Computer Use 的影響</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <h2>鍵盤熱鍵</h2>
+      <table>
+        <thead>
+          <tr><th>熱鍵</th><th>動作</th><th>用途</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>S</td><td>開始</td><td>啟動連續產生與掃描</td></tr>
+          <tr><td>E</td><td>結束</td><td>停止連續流程</td></tr>
+          <tr><td>G</td><td>產生一次</td><td>刷新 Ground Truth</td></tr>
+          <tr><td>C</td><td>掃描一次</td><td>執行單次辨識</td></tr>
+          <tr><td>T</td><td>切換配色</td><td>標準、實驗綠、活力橘輪流切換</td></tr>
+          <tr><td>+ / -</td><td>放大 / 縮小</td><td>調整整個操作介面</td></tr>
+          <tr><td>A</td><td>分析圖表</td><td>進入統計觀察頁</td></tr>
+          <tr><td>H / ?</td><td>專案說明</td><td>進入教學文件頁</td></tr>
         </tbody>
       </table>
     </section>
