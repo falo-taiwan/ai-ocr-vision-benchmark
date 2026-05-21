@@ -1,0 +1,1814 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>教室座位 SVG 配置工具 | Falo X Force Cheng</title>
+  <meta name="description" content="v-b.203 單檔 HTML 教室座位 SVG 配置工具：固定 3x2 長桌、18 張學生座位、老師講台、工程模式註解、密碼保護案例資料，以及 JSON / Excel 匯入匯出閉環。">
+  <meta name="author" content="Falo X Force Cheng">
+  <style>
+    /* Falo X Force Cheng v-b.203：這份 CSS 是教學版，不只負責美觀，也把 UI 邊界拆成可閱讀的教材段落。 */
+    /* Falo X Force Cheng：所有視覺元素保持向量與瀏覽器原生能力，方便 Gemini Canva 或初學者閱讀與重做。 */
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --ink: #1d2433;
+      --muted: #667085;
+      --line: #d5dbea;
+      --accent: #2563eb;
+      --accent-dark: #1e40af;
+      --teacher: #b91c1c;
+      --seat: #eef2ff;
+      --seat-line: #9aa8d7;
+      --desk: #d8a45f;
+      --desk-line: #8a5a22;
+      --ok: #087443;
+      --radius: 8px;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    .app {
+      width: min(1240px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 20px 0 32px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: clamp(24px, 4vw, 36px);
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      max-width: 760px;
+    }
+
+    .brand {
+      font-weight: 900;
+      color: #173b8f;
+      white-space: nowrap;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(640px, 1fr) 340px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .stage-panel {
+      display: grid;
+      gap: 10px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      min-height: 38px;
+      padding: 8px 11px;
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: #93a8d8;
+      background: #f8fbff;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 800;
+    }
+
+    button.primary:hover {
+      background: var(--accent-dark);
+    }
+
+    button.danger {
+      color: #b42318;
+    }
+
+    button.active {
+      background: #eaf1ff;
+      border-color: #8cb0ff;
+      color: #173b8f;
+      font-weight: 900;
+    }
+
+    .status {
+      min-height: 22px;
+      color: var(--ok);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .view-note {
+      color: #344054;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .svg-wrap {
+      width: 100%;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fdfcf8;
+      position: relative;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      min-width: 760px;
+      height: auto;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .room-bg {
+      fill: #fffaf0;
+    }
+
+    .front-zone {
+      fill: #eaf1ff;
+      stroke: #b6c7ee;
+      stroke-width: 2;
+    }
+
+    .podium {
+      fill: #f8d5d3;
+      stroke: var(--teacher);
+      stroke-width: 2;
+    }
+
+    .table {
+      fill: var(--desk);
+      stroke: var(--desk-line);
+      stroke-width: 2;
+    }
+
+    .seat {
+      fill: var(--seat);
+      stroke: var(--seat-line);
+      stroke-width: 1.5;
+      stroke-dasharray: 5 4;
+    }
+
+    .seat.is-target {
+      fill: #dcfce7;
+      stroke: #15803d;
+      stroke-width: 3;
+      stroke-dasharray: 0;
+    }
+
+    .label {
+      fill: #344054;
+      font-size: 15px;
+      font-weight: 800;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+
+    .small-label {
+      fill: #667085;
+      font-size: 12px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+
+    .person {
+      cursor: grab;
+    }
+
+    .person:active {
+      cursor: grabbing;
+    }
+
+    .person-card {
+      stroke: #1f2937;
+      stroke-width: 1.5;
+      rx: 8;
+      filter: url(#cardShadow);
+    }
+
+    .person-name {
+      fill: #111827;
+      font-size: 16px;
+      font-weight: 900;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+
+    .person-role {
+      fill: rgba(17, 24, 39, 0.72);
+      font-size: 11px;
+      font-weight: 800;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+
+    .person.is-dragging .person-card {
+      stroke: #2563eb;
+      stroke-width: 3;
+    }
+
+    .side-panel {
+      display: grid;
+      gap: 14px;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .name-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .name-row {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr) 72px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .name-row label {
+      color: #344054;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .name-row input,
+    .name-row select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      min-height: 36px;
+      padding: 7px 9px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .rule-list {
+      margin: 0;
+      padding-left: 20px;
+      color: #344054;
+      font-size: 14px;
+    }
+
+    .rule-list li + li {
+      margin-top: 6px;
+    }
+
+    .rules-svg {
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcff;
+    }
+
+    .case-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .case-row button {
+      min-height: 34px;
+      padding: 6px 10px;
+      font-size: 14px;
+    }
+
+    .rules-title {
+      fill: #1d2433;
+      font-size: 18px;
+      font-weight: 900;
+      text-anchor: middle;
+    }
+
+    .rules-box {
+      fill: #ffffff;
+      stroke: #9db2d7;
+      stroke-width: 2;
+      rx: 8;
+    }
+
+    .rules-box.teacher {
+      fill: #fff1f2;
+      stroke: #dc2626;
+    }
+
+    .rules-box.student {
+      fill: #eef7ff;
+      stroke: #2563eb;
+    }
+
+    .rules-box.data {
+      fill: #f4fce3;
+      stroke: #65a30d;
+    }
+
+    .rules-text {
+      fill: #344054;
+      font-size: 12px;
+      font-weight: 800;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .rules-arrow {
+      stroke: #667085;
+      stroke-width: 2;
+      marker-end: url(#rulesArrow);
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .color-card {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 7px;
+      align-items: center;
+      min-width: 0;
+      color: #344054;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .rgb-row {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .rgb-row input {
+      width: 100%;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 4px 6px;
+      font-size: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1px solid #98a2b3;
+    }
+
+    .data-box {
+      width: 100%;
+      min-height: 150px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: #1f2937;
+      background: #fbfcff;
+    }
+
+    @media (max-width: 980px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        align-items: start;
+      }
+
+      .brand {
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body data-view="teacher">
+  <main class="app">
+    <header>
+      <div>
+        <h1>教室座位 SVG 配置工具</h1>
+        <p class="subtitle">v-b.203｜固定 3x2 長桌、18 個學生座位與前方老師講台；預設去識別化，既有範例資料需輸入密碼後才載入。</p>
+      </div>
+      <div class="brand">Falo X Force Cheng</div>
+    </header>
+
+    <section class="layout">
+      <section class="panel stage-panel">
+        <div class="toolbar">
+          <div class="button-row">
+            <button class="active" id="teacherViewBtn" type="button">老師視角（站前方看台下 / 可列印）</button>
+            <button id="studentViewBtn" type="button">學生視角（坐台下看前方）</button>
+            <button class="primary" id="saveBtn" type="button">儲存座位</button>
+            <button id="exportBtn" type="button">匯出 JSON</button>
+            <button id="importBtn" type="button">匯入覆蓋</button>
+            <button id="exportCsvBtn" type="button">匯出 Excel</button>
+            <button id="sampleGroupBtn" type="button">案例：載入範例團體</button>
+            <button id="resetBtn" class="danger" type="button">重設</button>
+          </div>
+          <div class="status" id="statusText" aria-live="polite"></div>
+        </div>
+        <div class="view-note" id="viewNote">老師視角：座位位置旋轉 180 度，但文字保持正向，站在前方看台下時可直接點名或列印。</div>
+        <div class="case-row" aria-label="工程模式案件">
+          <button type="button" data-case="teacher">案件：老師區域</button>
+          <button type="button" data-case="student">案件：學生座位</button>
+          <button type="button" data-case="swap">案件：交換座位</button>
+          <button type="button" data-case="data">案件：資料閉環</button>
+          <button type="button" data-case="clear">關閉註解</button>
+        </div>
+        <p class="hint">工程模式以學生視角為標準座標；點選案件會自動切到學生視角再顯示 SVG 註解圖層。</p>
+        <input id="importFile" type="file" accept=".json,.csv,.xls,.xml,text/csv,application/json,application/vnd.ms-excel,text/xml" hidden>
+
+        <div class="svg-wrap">
+            <svg id="classroomSvg" viewBox="0 0 960 700" role="img" aria-label="教室座位圖">
+            <defs>
+              <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#101828" flood-opacity="0.22"></feDropShadow>
+              </filter>
+            </defs>
+
+            <g id="roomLayer">
+              <rect class="room-bg" x="0" y="0" width="960" height="700"></rect>
+              <rect class="front-zone" id="frontZone" x="42" y="28" width="876" height="150" rx="8"></rect>
+              <text class="label" id="frontLabel" x="480" y="56">教室前方 / 老師區</text>
+              <rect class="podium seat" id="seat-teacher" data-seat-id="teacher" data-seat-type="teacher" x="390" y="82" width="180" height="72" rx="8"></rect>
+              <text class="label" id="teacherSeatLabel" x="480" y="118">老師講台</text>
+
+              <text class="label" id="studentAreaLabel" x="480" y="214">學生長桌區：3 排 x 2 張長桌，每張桌子 3 個座位</text>
+
+              <g id="furnitureLayer"></g>
+              <g id="peopleLayer"></g>
+              <g id="caseOverlayLayer"></g>
+            </g>
+            </svg>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <section class="panel">
+          <h2>姓名設定</h2>
+        <p class="hint">改名字會立即更新 SVG 色卡。姓名空白時人物會消失，座位仍保留。老師只能留在講台，學生只能放到學生座位。</p>
+          <div class="name-list" id="nameList"></div>
+        </section>
+
+        <section class="panel">
+          <h2>圖例</h2>
+          <div class="legend">
+            <div class="legend-item"><span class="swatch" style="background:#f8d5d3"></span>老師講台</div>
+            <div class="legend-item"><span class="swatch" style="background:#d8a45f"></span>固定長桌</div>
+            <div class="legend-item"><span class="swatch" style="background:#eef2ff"></span>可放座位</div>
+            <div class="legend-item"><span class="swatch" style="background:#dcfce7"></span>拖曳目標</div>
+          </div>
+        </section>
+
+        <div hidden>
+          <div id="colorGrid"></div>
+          <textarea id="dataBox" readonly></textarea>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    /* Falo X Force Cheng v-b.203：主程式採單檔 HTML，讓學生可以直接看見 UI、SVG、資料庫與治理邊界如何放在一起。 */
+    /* Falo X Force Cheng：此版本刻意保留大量註解，讓程式碼本身也能變成 AI OCR / SVG / 資料閉環教材。 */
+    /* Falo X Force Cheng：預設資料去識別化，受保護案例資料只以 AES-GCM 密文存在於程式碼中。 */
+    const APP_VERSION = "v-b.203";
+    // Falo X Force Cheng：localStorage key 獨立於畫面版本，避免更新教材時直接清掉老師正在練習的本機資料。
+    const STORAGE_KEY = "falo_classroom_seat_map_v001";
+    // Falo X Force Cheng：人物卡尺寸固定，OCR 與拖曳座標才有穩定的視覺基準。
+    const CARD = { width: 86, height: 46 };
+    // Falo X Force Cheng：老師使用圖形座標系，所以需要一個可移動但不能離開的講師區域。
+    const TEACHER_AREA = { x: 42, y: 28, width: 876, height: 150 };
+    // Falo X Force Cheng：所有座位、桌子、人物、工程註解都由 SVG 建立，方便之後接 OCR / Vision 標定。
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    // Falo X Force Cheng：把匯出資料設計成多張 sheet，是為了讓學生理解「畫面其實是資料庫的視覺化」。
+    const DB_SHEETS = [
+      { name: "people", description: "人物資料表：姓名、角色、性別、色卡、座位或自由座標。" },
+      { name: "seats", description: "座位資料表：固定桌位與座位座標。" },
+      { name: "colors", description: "色卡資料表：OCR 用 RGB 色彩基準。" },
+      { name: "rules", description: "工程規則資料表：角色邊界、座標系與匯入規則。" },
+      { name: "views", description: "視角資料表：老師視角與學生視角定義。" }
+    ];
+    // Falo X Force Cheng：密碼只存 SHA-256 雜湊；前端可示範治理門檻，但不能取代真正後端權限。
+    const SAMPLE_PASSWORD_HASH = "47620c7fbf06244327a816a649485c798d088eb3f88012e5bd5ed7ead83457bc";
+    // Falo X Force Cheng：下方密文來自老師提供的 JSON 預設資料，程式碼中不保留姓名明文。
+    const SAMPLE_GROUP_ENCRYPTED = {
+      algorithm: "AES-GCM",
+      passwordHint: "20260522",
+      source: "protected-default-json",
+      iv: "km33xik5nEqM2SZY",
+      data: "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"
+    };
+
+    // Falo X Force Cheng：19 色色卡是後續 OCR Ground Truth 的穩定基準；目前畫面簡化，但資料仍可匯出。
+    const colorPalette = [
+      { id: "color-01", role: "teacher", name: "老師色", hex: "#f7d889" },
+      { id: "color-02", role: "student", name: "學生座位色 1", hex: "#bfdbfe" },
+      { id: "color-03", role: "student", name: "學生座位色 2", hex: "#bbf7d0" },
+      { id: "color-04", role: "student", name: "學生座位色 3", hex: "#fde68a" },
+      { id: "color-05", role: "student", name: "學生座位色 4", hex: "#fbcfe8" },
+      { id: "color-06", role: "student", name: "學生座位色 5", hex: "#ddd6fe" },
+      { id: "color-07", role: "student", name: "學生座位色 6", hex: "#fed7aa" },
+      { id: "color-08", role: "student", name: "學生座位色 7", hex: "#a7f3d0" },
+      { id: "color-09", role: "student", name: "學生座位色 8", hex: "#c7d2fe" },
+      { id: "color-10", role: "student", name: "學生座位色 9", hex: "#fecdd3" },
+      { id: "color-11", role: "student", name: "保留色 10", hex: "#bae6fd" },
+      { id: "color-12", role: "student", name: "保留色 11", hex: "#d9f99d" },
+      { id: "color-13", role: "student", name: "保留色 12", hex: "#fef08a" },
+      { id: "color-14", role: "student", name: "保留色 13", hex: "#f0abfc" },
+      { id: "color-15", role: "student", name: "保留色 14", hex: "#a5b4fc" },
+      { id: "color-16", role: "student", name: "保留色 15", hex: "#fdba74" },
+      { id: "color-17", role: "student", name: "保留色 16", hex: "#99f6e4" },
+      { id: "color-18", role: "student", name: "保留色 17", hex: "#fca5a5" },
+      { id: "color-19", role: "student", name: "保留色 18", hex: "#e5e7eb" }
+    ];
+
+    // Falo X Force Cheng：預設 people 保持去識別化；按密碼按鈕才載入受保護案例資料。
+    const defaultPeople = [
+      { id: "teacher-force", role: "teacher", label: "老師", name: "Force", gender: "", colorId: "color-01", color: colorPalette[0].hex, seatId: null, x: 437, y: 95 },
+      { id: "student-01", role: "student", label: "學生1", name: "", gender: "", colorId: "color-02", color: colorPalette[1].hex, seatId: "r1t1s1" },
+      { id: "student-02", role: "student", label: "學生2", name: "", gender: "", colorId: "color-03", color: colorPalette[2].hex, seatId: "r1t1s2" },
+      { id: "student-03", role: "student", label: "學生3", name: "", gender: "", colorId: "color-04", color: colorPalette[3].hex, seatId: "r1t1s3" },
+      { id: "student-04", role: "student", label: "學生4", name: "", gender: "", colorId: "color-05", color: colorPalette[4].hex, seatId: "r1t2s1" },
+      { id: "student-05", role: "student", label: "學生5", name: "", gender: "", colorId: "color-06", color: colorPalette[5].hex, seatId: "r1t2s2" },
+      { id: "student-06", role: "student", label: "學生6", name: "", gender: "", colorId: "color-07", color: colorPalette[6].hex, seatId: "r1t2s3" },
+      { id: "student-07", role: "student", label: "學生7", name: "", gender: "", colorId: "color-08", color: colorPalette[7].hex, seatId: "r2t1s1" },
+      { id: "student-08", role: "student", label: "學生8", name: "", gender: "", colorId: "color-09", color: colorPalette[8].hex, seatId: "r2t1s2" },
+      { id: "student-09", role: "student", label: "學生9", name: "", gender: "", colorId: "color-10", color: colorPalette[9].hex, seatId: "r2t1s3" },
+      { id: "student-10", role: "student", label: "學生10", name: "", gender: "", colorId: "color-11", color: colorPalette[10].hex, seatId: "r2t2s1" },
+      { id: "student-11", role: "student", label: "學生11", name: "", gender: "", colorId: "color-12", color: colorPalette[11].hex, seatId: "r2t2s2" },
+      { id: "student-12", role: "student", label: "學生12", name: "", gender: "", colorId: "color-13", color: colorPalette[12].hex, seatId: "r2t2s3" },
+      { id: "student-13", role: "student", label: "學生13", name: "", gender: "", colorId: "color-14", color: colorPalette[13].hex, seatId: "r3t1s1" },
+      { id: "student-14", role: "student", label: "學生14", name: "", gender: "", colorId: "color-15", color: colorPalette[14].hex, seatId: "r3t1s2" },
+      { id: "student-15", role: "student", label: "學生15", name: "", gender: "", colorId: "color-16", color: colorPalette[15].hex, seatId: "r3t1s3" },
+      { id: "student-16", role: "student", label: "學生16", name: "", gender: "", colorId: "color-17", color: colorPalette[16].hex, seatId: "r3t2s1" },
+      { id: "student-17", role: "student", label: "學生17", name: "", gender: "", colorId: "color-18", color: colorPalette[17].hex, seatId: "r3t2s2" },
+      { id: "student-18", role: "student", label: "學生18", name: "", gender: "", colorId: "color-19", color: colorPalette[18].hex, seatId: "r3t2s3" }
+    ];
+
+    // Falo X Force Cheng：state 是前端小資料庫，render / export / import 都從這裡取得唯一真相。
+    const state = {
+      people: structuredClone(defaultPeople),
+      seats: [],
+      sampleGroupAuthorized: false
+    };
+
+    const svg = document.getElementById("classroomSvg");
+    const roomLayer = document.getElementById("roomLayer");
+    const frontZone = document.getElementById("frontZone");
+    const frontLabel = document.getElementById("frontLabel");
+    const teacherSeatLabel = document.getElementById("teacherSeatLabel");
+    const studentAreaLabel = document.getElementById("studentAreaLabel");
+    const furnitureLayer = document.getElementById("furnitureLayer");
+    const peopleLayer = document.getElementById("peopleLayer");
+    const caseOverlayLayer = document.getElementById("caseOverlayLayer");
+    const nameList = document.getElementById("nameList");
+    const colorGrid = document.getElementById("colorGrid");
+    const dataBox = document.getElementById("dataBox");
+    const statusText = document.getElementById("statusText");
+    const teacherViewBtn = document.getElementById("teacherViewBtn");
+    const studentViewBtn = document.getElementById("studentViewBtn");
+    const viewNote = document.getElementById("viewNote");
+    const importFile = document.getElementById("importFile");
+    const rulesPanel = document.getElementById("rulesPanel");
+    let activeDrag = null;
+
+    // Falo X Force Cheng：集中建立 SVG 元素，避免每段程式重複寫 namespace 與 setAttribute。
+    function createSvgElement(tag, attrs = {}) {
+      const element = document.createElementNS(SVG_NS, tag);
+      Object.entries(attrs).forEach(([key, value]) => {
+        element.setAttribute(key, value);
+      });
+      return element;
+    }
+
+    // Falo X Force Cheng：工程模式不是切到另一頁，而是在同一張學生視角 SVG 上疊註解層。
+    function showCaseOverlay(caseId) {
+      caseOverlayLayer.replaceChildren();
+      if (caseId === "clear") return;
+      if (!isTeacherView()) {
+        viewNote.textContent = "工程模式：以學生視角作為標準座標，圖上註解可用來說明資料規則。";
+      }
+
+      const group = createSvgElement("g", { "data-case": caseId });
+      const overlay = createSvgElement("rect", {
+        x: 18,
+        y: 18,
+        width: 924,
+        height: 664,
+        fill: "rgba(15, 23, 42, 0.08)",
+        stroke: "#2563eb",
+        "stroke-width": 2,
+        rx: 10
+      });
+      group.appendChild(overlay);
+
+      const cases = {
+        teacher: {
+          box: [70, 44, 820, 116],
+          note: ["老師 = 圖形座標系", "可在老師區域內自由移動", "不能拖到學生桌區"],
+          noteAt: [610, 190]
+        },
+        student: {
+          box: [120, 240, 720, 360],
+          note: ["學生 = 座位絕對座標系", "資料只記錄 seatId", "桌子與座位本身不可移動"],
+          noteAt: [610, 120]
+        },
+        swap: {
+          box: [120, 240, 720, 360],
+          note: ["交換規則", "拖到已有人座位時", "兩位學生交換 seatId"],
+          noteAt: [88, 118]
+        },
+        data: {
+          box: [42, 28, 876, 610],
+          note: ["資料閉環", "匯出 JSON / Excel", "匯入後全覆蓋並重新驗證"],
+          noteAt: [560, 92]
+        }
+      };
+
+      const config = cases[caseId];
+      if (!config) return;
+      const [x, y, width, height] = config.box;
+      group.appendChild(createSvgElement("rect", {
+        x,
+        y,
+        width,
+        height,
+        fill: "none",
+        stroke: "#dc2626",
+        "stroke-width": 4,
+        "stroke-dasharray": "10 6",
+        rx: 12
+      }));
+
+      const [noteX, noteY] = config.noteAt;
+      group.appendChild(createSvgElement("rect", {
+        x: noteX,
+        y: noteY,
+        width: 270,
+        height: 96,
+        fill: "#ffffff",
+        stroke: "#1d4ed8",
+        "stroke-width": 2,
+        rx: 8,
+        filter: "url(#cardShadow)"
+      }));
+      config.note.forEach((line, index) => {
+        group.appendChild(createSvgElement("text", {
+          class: "label",
+          x: noteX + 135,
+          y: noteY + 26 + index * 26
+        })).textContent = line;
+      });
+
+      group.appendChild(createSvgElement("line", {
+        x1: noteX + 135,
+        y1: noteY + 96,
+        x2: x + width / 2,
+        y2: y + height / 2,
+        stroke: "#1d4ed8",
+        "stroke-width": 3,
+        "stroke-dasharray": "8 5"
+      }));
+
+      caseOverlayLayer.appendChild(group);
+    }
+
+    // Falo X Force Cheng：座位模型是固定桌椅的資料層；桌子不可拖，學生只改 seatId。
+    function buildSeatModel() {
+      const seats = [{ id: "teacher", type: "teacher", tableId: "podium", x: 480, y: 118 }];
+      const startX = 138;
+      const tableGapX = 356;
+      const startY = 260;
+      const rowGapY = 132;
+      const tableWidth = 270;
+      const tableHeight = 72;
+      const seatWidth = tableWidth / 3;
+
+      for (let row = 1; row <= 3; row += 1) {
+        for (let table = 1; table <= 2; table += 1) {
+          const tableX = startX + (table - 1) * tableGapX;
+          const tableY = startY + (row - 1) * rowGapY;
+          for (let seat = 1; seat <= 3; seat += 1) {
+            seats.push({
+              id: `r${row}t${table}s${seat}`,
+              type: "student",
+              tableId: `r${row}t${table}`,
+              row,
+              table,
+              seat,
+              x: tableX + seatWidth * (seat - 0.5),
+              y: tableY + tableHeight / 2
+            });
+          }
+        }
+      }
+      state.seats = seats;
+    }
+
+    // Falo X Force Cheng：老師視角只改顯示座標，底層資料仍維持同一套模型。
+    function isTeacherView() {
+      return document.body.dataset.view === "teacher";
+    }
+
+    // Falo X Force Cheng：老師視角等於把整張教室座標旋轉 180 度，但人物文字仍維持可讀。
+    function displayX(x) {
+      return isTeacherView() ? 960 - x : x;
+    }
+
+    function displayY(y) {
+      return isTeacherView() ? 700 - y : y;
+    }
+
+    function displayRectX(x, width) {
+      return isTeacherView() ? 960 - x - width : x;
+    }
+
+    function displayRectY(y, height) {
+      return isTeacherView() ? 700 - y - height : y;
+    }
+
+    function getDisplaySeat(seat) {
+      return { ...seat, x: displayX(seat.x), y: displayY(seat.y) };
+    }
+
+    function displayTopLeftFromModel(x, y, width, height) {
+      return {
+        x: displayRectX(x, width),
+        y: displayRectY(y, height)
+      };
+    }
+
+    function modelTopLeftFromDisplay(x, y, width, height) {
+      return {
+        x: isTeacherView() ? 960 - x - width : x,
+        y: isTeacherView() ? 700 - y - height : y
+      };
+    }
+
+    function getTeacherDisplayBounds() {
+      return {
+        x: displayRectX(TEACHER_AREA.x, TEACHER_AREA.width),
+        y: displayRectY(TEACHER_AREA.y, TEACHER_AREA.height),
+        width: TEACHER_AREA.width,
+        height: TEACHER_AREA.height
+      };
+    }
+
+    // Falo X Force Cheng：靜態教室區塊只受視角影響，不受學生名單或拖曳影響。
+    function drawStaticRoom() {
+      frontZone.setAttribute("y", displayRectY(TEACHER_AREA.y, TEACHER_AREA.height));
+      frontLabel.setAttribute("y", displayY(56));
+      document.getElementById("seat-teacher").setAttribute("y", displayRectY(82, 72));
+      teacherSeatLabel.setAttribute("y", displayY(118));
+      studentAreaLabel.setAttribute("y", displayY(214));
+    }
+
+    // Falo X Force Cheng：家具層代表固定實體世界；這層重畫時仍不能被使用者移動。
+    function drawFurniture() {
+      furnitureLayer.replaceChildren();
+      const startX = 138;
+      const tableGapX = 356;
+      const startY = 260;
+      const rowGapY = 132;
+      const tableWidth = 270;
+      const tableHeight = 72;
+      const seatWidth = tableWidth / 3;
+
+      for (let row = 1; row <= 3; row += 1) {
+        for (let table = 1; table <= 2; table += 1) {
+          const tableX = startX + (table - 1) * tableGapX;
+          const displayTableX = displayRectX(tableX, tableWidth);
+          const tableY = startY + (row - 1) * rowGapY;
+          const displayTableY = displayRectY(tableY, tableHeight);
+          const tableId = `r${row}t${table}`;
+          const tableGroup = createSvgElement("g", { "data-table-id": tableId });
+
+          tableGroup.appendChild(createSvgElement("rect", {
+            class: "table",
+            x: displayTableX,
+            y: displayTableY,
+            width: tableWidth,
+            height: tableHeight,
+            rx: 8
+          }));
+
+          tableGroup.appendChild(createSvgElement("text", {
+            class: "small-label",
+            x: displayTableX + tableWidth / 2,
+            y: isTeacherView() ? displayTableY + tableHeight + 18 : tableY - 16
+          })).textContent = `第 ${row} 排 / 第 ${table} 張長桌`;
+
+          for (let seat = 1; seat <= 3; seat += 1) {
+            const seatId = `r${row}t${table}s${seat}`;
+            const x = tableX + seatWidth * (seat - 1) + 5;
+            const displaySeatX = displayRectX(x, seatWidth - 10);
+            const displaySeatY = displayRectY(tableY + 8, tableHeight - 16);
+            const seatRect = createSvgElement("rect", {
+              class: "seat",
+              id: `seat-${seatId}`,
+              "data-seat-id": seatId,
+              "data-seat-type": "student",
+              x: displaySeatX,
+              y: displaySeatY,
+              width: seatWidth - 10,
+              height: tableHeight - 16,
+              rx: 6
+            });
+            tableGroup.appendChild(seatRect);
+
+            tableGroup.appendChild(createSvgElement("text", {
+              class: "small-label",
+              x: displaySeatX + (seatWidth - 10) / 2,
+              y: isTeacherView() ? displayTableY - 16 : tableY + tableHeight + 18
+            })).textContent = `座位 ${seat}`;
+          }
+
+          furnitureLayer.appendChild(tableGroup);
+        }
+      }
+    }
+
+    function getSeat(seatId) {
+      return state.seats.find((seat) => seat.id === seatId);
+    }
+
+    // Falo X Force Cheng：老師讀 x/y，學生讀 seatId，這裡把兩種座標系轉成畫面位置。
+    function getPersonPosition(person) {
+      if (person.role === "teacher" && person.x !== undefined && person.y !== undefined) {
+        return displayTopLeftFromModel(person.x, person.y, CARD.width, CARD.height);
+      }
+      const seat = getSeat(person.seatId);
+      if (seat) {
+        const displaySeat = getDisplaySeat(seat);
+        return {
+          x: displaySeat.x - CARD.width / 2,
+          y: displaySeat.y - CARD.height / 2
+        };
+      }
+      return { x: person.x ?? 40, y: person.y ?? 610 };
+    }
+
+    // Falo X Force Cheng：人物層是可動資料卡；姓名空白就不渲染，座位仍然存在。
+    function drawPeople() {
+      peopleLayer.replaceChildren();
+      state.people.filter(isVisiblePerson).forEach((person) => {
+        const position = getPersonPosition(person);
+        const group = createSvgElement("g", {
+          class: "person",
+          id: person.id,
+          "data-person-id": person.id,
+          transform: `translate(${position.x}, ${position.y})`
+        });
+
+        group.appendChild(createSvgElement("rect", {
+          class: "person-card",
+          x: 0,
+          y: 0,
+          width: CARD.width,
+          height: CARD.height,
+          fill: person.color
+        }));
+
+        group.appendChild(createSvgElement("circle", {
+          cx: 17,
+          cy: 16,
+          r: 9,
+          fill: getGenderDotColor(person),
+          opacity: 0.9
+        }));
+
+        group.appendChild(createSvgElement("text", {
+          class: "person-role",
+          x: CARD.width / 2,
+          y: 12
+        })).textContent = person.label;
+
+        group.appendChild(createSvgElement("text", {
+          class: "person-name",
+          x: CARD.width / 2,
+          y: 30
+        })).textContent = person.name;
+
+        group.addEventListener("pointerdown", startDrag);
+        peopleLayer.appendChild(group);
+      });
+    }
+
+    // Falo X Force Cheng：右側表單是資料庫編輯器的最小型版本，輸入後立即回寫 state。
+    function renderNameInputs() {
+      nameList.replaceChildren();
+      state.people.forEach((person) => {
+        const row = document.createElement("div");
+        row.className = "name-row";
+
+        const label = document.createElement("label");
+        label.htmlFor = `input-${person.id}`;
+        label.textContent = person.label;
+
+        const input = document.createElement("input");
+        input.id = `input-${person.id}`;
+        input.value = person.name;
+        input.autocomplete = "off";
+        input.addEventListener("input", () => {
+          person.name = input.value.trim();
+          drawPeople();
+          updateDataBox();
+        });
+
+        const genderSelect = document.createElement("select");
+        genderSelect.setAttribute("aria-label", `${person.label} 性別`);
+        genderSelect.innerHTML = `
+          <option value="">未選</option>
+          <option value="male">男</option>
+          <option value="female">女</option>
+        `;
+        genderSelect.value = person.gender || "";
+        if (person.role === "teacher") {
+          genderSelect.disabled = true;
+        }
+        genderSelect.addEventListener("change", () => {
+          person.gender = genderSelect.value;
+          drawPeople();
+          updateDataBox();
+        });
+
+        row.append(label, input, genderSelect);
+        nameList.appendChild(row);
+      });
+    }
+
+    // Falo X Force Cheng：老師小圓點固定綠色；學生依性別顯示不同 OCR 輔助訊號。
+    function getGenderDotColor(person) {
+      if (person.role === "teacher") return "#16a34a";
+      if (person.gender === "male") return "#2563eb";
+      if (person.gender === "female") return "#db2777";
+      return "#64748b";
+    }
+
+    // Falo X Force Cheng：色卡 UI 暫時藏起來，但保留 RGB 可調邏輯與匯出能力，方便進階版接回來。
+    function renderColorGrid() {
+      colorGrid.replaceChildren();
+      colorPalette.forEach((color) => {
+        const item = document.createElement("div");
+        item.className = "color-card";
+
+        const swatch = document.createElement("span");
+        swatch.className = "swatch";
+        swatch.style.background = color.hex;
+
+        const label = document.createElement("span");
+        label.textContent = `${color.id} ${color.hex}`;
+
+        const rgb = hexToRgb(color.hex);
+        const rgbRow = document.createElement("div");
+        rgbRow.className = "rgb-row";
+        ["r", "g", "b"].forEach((channel) => {
+          const input = document.createElement("input");
+          input.type = "number";
+          input.min = "0";
+          input.max = "255";
+          input.value = rgb[channel];
+          input.setAttribute("aria-label", `${color.id} ${channel.toUpperCase()}`);
+          input.addEventListener("change", () => {
+            rgb[channel] = clamp(Number(input.value) || 0, 0, 255);
+            color.hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+            updatePeopleColors();
+            renderColorGrid();
+            drawPeople();
+            updateDataBox();
+            saveState(false);
+          });
+          rgbRow.appendChild(input);
+        });
+
+        item.append(swatch, label, rgbRow);
+        colorGrid.appendChild(item);
+      });
+    }
+
+    function updatePeopleColors() {
+      state.people.forEach((person) => {
+        const color = colorPalette.find((item) => item.id === person.colorId);
+        if (color) person.color = color.hex;
+      });
+    }
+
+    function hexToRgb(hex) {
+      const value = hex.replace("#", "");
+      return {
+        r: parseInt(value.slice(0, 2), 16),
+        g: parseInt(value.slice(2, 4), 16),
+        b: parseInt(value.slice(4, 6), 16)
+      };
+    }
+
+    function rgbToHex(r, g, b) {
+      return `#${[r, g, b].map((value) => clamp(Math.round(value), 0, 255).toString(16).padStart(2, "0")).join("")}`;
+    }
+
+    // Falo X Force Cheng：拖曳開始時先保存原座位，後面才有辦法做「交換」而不是疊在一起。
+    function startDrag(event) {
+      const group = event.currentTarget;
+      const personId = group.dataset.personId;
+      const person = state.people.find((item) => item.id === personId);
+      const point = toRoomPoint(event);
+      const current = getPersonPosition(person);
+
+      activeDrag = {
+        person,
+        group,
+        originalSeatId: person.seatId,
+        originalX: person.x,
+        originalY: person.y,
+        offsetX: point.x - current.x,
+        offsetY: point.y - current.y
+      };
+
+      group.classList.add("is-dragging");
+      group.setPointerCapture(event.pointerId);
+      group.addEventListener("pointermove", moveDrag);
+      group.addEventListener("pointerup", endDrag);
+      group.addEventListener("pointercancel", endDrag);
+    }
+
+    // Falo X Force Cheng：拖曳過程只更新臨時畫面；老師限制在講台區，學生限制在教室範圍。
+    function moveDrag(event) {
+      if (!activeDrag) return;
+      const point = toRoomPoint(event);
+      let x = point.x - activeDrag.offsetX;
+      let y = point.y - activeDrag.offsetY;
+      if (activeDrag.person.role === "teacher") {
+        const bounds = getTeacherDisplayBounds();
+        x = clamp(x, bounds.x, bounds.x + bounds.width - CARD.width);
+        y = clamp(y, bounds.y, bounds.y + bounds.height - CARD.height);
+      } else {
+        x = clamp(x, 8, 960 - CARD.width - 8);
+        y = clamp(y, 8, 700 - CARD.height - 8);
+      }
+      activeDrag.group.setAttribute("transform", `translate(${x}, ${y})`);
+      const modelPoint = modelTopLeftFromDisplay(x, y, CARD.width, CARD.height);
+      activeDrag.person.seatId = null;
+      activeDrag.person.x = Math.round(modelPoint.x);
+      activeDrag.person.y = Math.round(modelPoint.y);
+      if (activeDrag.person.role === "teacher") {
+        clearSeatHighlights();
+      } else {
+        highlightNearestSeat(x + CARD.width / 2, y + CARD.height / 2, activeDrag.person.role);
+      }
+    }
+
+    // Falo X Force Cheng：放開滑鼠時才提交規則，學生吸附最近座位，老師保留自由 x/y。
+    function endDrag(event) {
+      if (!activeDrag) return;
+      const point = toRoomPoint(event);
+      const nearest = activeDrag.person.role === "teacher" ? null : findNearestSeat(point.x, point.y, activeDrag.person.role);
+      if (activeDrag.person.role === "teacher") {
+        activeDrag.person.seatId = null;
+      } else if (nearest) {
+        movePersonToSeat(activeDrag.person, nearest.id, activeDrag);
+      }
+      activeDrag.group.classList.remove("is-dragging");
+      activeDrag.group.releasePointerCapture(event.pointerId);
+      activeDrag.group.removeEventListener("pointermove", moveDrag);
+      activeDrag.group.removeEventListener("pointerup", endDrag);
+      activeDrag.group.removeEventListener("pointercancel", endDrag);
+      activeDrag = null;
+      clearSeatHighlights();
+      drawPeople();
+      updateDataBox();
+    }
+
+    function toRoomPoint(event) {
+      const point = svg.createSVGPoint();
+      point.x = event.clientX;
+      point.y = event.clientY;
+      return point.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function findNearestSeat(x, y, role) {
+      const allowedType = role === "teacher" ? "teacher" : "student";
+      let best = null;
+      let bestDistance = Infinity;
+      state.seats
+        .filter((seat) => seat.type === allowedType)
+        .forEach((seat) => {
+          const displaySeat = getDisplaySeat(seat);
+          const distance = Math.hypot(displaySeat.x - x, displaySeat.y - y);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            best = seat;
+          }
+        });
+      return bestDistance <= 92 ? best : null;
+    }
+
+    function isVisiblePerson(person) {
+      return Boolean(String(person.name || "").trim());
+    }
+
+    function findVisiblePersonAtSeat(seatId, excludeId = null) {
+      return state.people.find((person) => {
+        return person.id !== excludeId && person.seatId === seatId && isVisiblePerson(person);
+      });
+    }
+
+    // Falo X Force Cheng：已有人時交換 seatId，這是避免疊疊樂的核心規則。
+    function movePersonToSeat(person, seatId, dragState) {
+      const occupant = findVisiblePersonAtSeat(seatId, person.id);
+      if (occupant) {
+        occupant.seatId = dragState.originalSeatId || null;
+        if (!dragState.originalSeatId) {
+          occupant.x = dragState.originalX ?? 40;
+          occupant.y = dragState.originalY ?? 610;
+        } else {
+          delete occupant.x;
+          delete occupant.y;
+        }
+      }
+      person.seatId = seatId;
+      delete person.x;
+      delete person.y;
+    }
+
+    function highlightNearestSeat(x, y, role) {
+      clearSeatHighlights();
+      const nearest = findNearestSeat(x, y, role);
+      if (!nearest) return;
+      const rect = document.getElementById(`seat-${nearest.id}`);
+      if (rect) rect.classList.add("is-target");
+    }
+
+    function clearSeatHighlights() {
+      document.querySelectorAll(".seat.is-target").forEach((seat) => {
+        seat.classList.remove("is-target");
+      });
+    }
+
+    // Falo X Force Cheng：匯出不是截圖，而是完整資料庫快照，讓 JSON / Excel / OCR 結果能閉環。
+    function getExportData() {
+      return {
+        version: "classroom-seat-map-v-b.203",
+        room: {
+          teacherArea: "front",
+          fixedTables: "3 rows x 2 long tables",
+          seatsPerTable: 3,
+          studentSeatCapacity: 18,
+          activeStudentCards: state.people.filter((person) => person.role === "student" && isVisiblePerson(person)).length,
+          stableOcrColors: 19,
+          views: ["teacher", "student"],
+          viewDefinitions: {
+            teacher: "座位位置旋轉 180 度，但文字保持正向；站在教室前方看台下時，方向符合老師本人視角，適合列印點名。",
+            student: "坐在學生座位看講台，左右方向符合學生或投影視角，也是工程模式註解的標準座標。"
+          },
+          roleBoundaries: getRuleRows().filter((rule) => rule.category === "role_boundary"),
+          coordinateSystems: getRuleRows().filter((rule) => rule.category === "coordinate_system"),
+          futureSyncTargets: ["local_server", "lan_server", "gas_cloud"]
+        },
+        sampleGroupPolicy: {
+          version: APP_VERSION,
+          defaultGroup: "De-identified by default; protected default JSON is encrypted.",
+          passwordGate: "Password 20260522 is required to decrypt protected default data in the browser."
+        },
+        database: {
+          sheetDesign: DB_SHEETS,
+          tables: {
+            people: getPeopleRows(),
+            seats: state.seats,
+            colors: getColorRows(),
+            rules: getRuleRows(),
+            views: getViewRows()
+          }
+        },
+        colorPalette: getColorRows(),
+        people: getPeopleRows(),
+        seats: state.seats
+      };
+    }
+
+    function getPeopleRows() {
+      return state.people.map((person) => ({
+        id: person.id,
+        role: person.role,
+        label: person.label,
+        name: person.name,
+        gender: person.gender || "",
+        genderDotColor: getGenderDotColor(person),
+        colorId: person.colorId,
+        color: person.color,
+        seatId: person.seatId,
+        freePosition: person.seatId ? null : { x: person.x ?? null, y: person.y ?? null }
+      }));
+    }
+
+    function getRuleRows() {
+      return [
+        { id: "rule-01", category: "coordinate_system", target: "teacher", rule: "圖形座標系：記錄老師卡在老師區域內的 x/y 位置。" },
+        { id: "rule-02", category: "coordinate_system", target: "student", rule: "座位絕對座標系：記錄學生對應到哪一個固定 seatId。" },
+        { id: "rule-03", category: "role_boundary", target: "teacher", rule: "老師只能在老師區域內自由定位，不能移到學生區。" },
+        { id: "rule-04", category: "role_boundary", target: "student", rule: "學生只能吸附學生座位。" },
+        { id: "rule-05", category: "visibility", target: "person", rule: "姓名空白時人物卡不顯示，但座位與色卡資料保留。" },
+        { id: "rule-06", category: "drag", target: "student", rule: "學生拖到已有人的座位時，兩位交換 seatId。" },
+        { id: "rule-07", category: "import", target: "database", rule: "JSON/CSV 匯入採全覆蓋，並重新檢查重疊座位。" },
+        { id: "rule-08", category: "future", target: "ocr", rule: "進階版可把 OCR 辨識結果轉成同一份 people/seats 資料後回灌。" },
+        { id: "rule-09", category: "governance", target: "protected_default_data", rule: "預設去識別化；載入既有範例資料需輸入密碼 20260522 解密，並以全覆蓋方式回寫 people / colors。" }
+      ];
+    }
+
+    function getColorRows() {
+      return colorPalette.map((color) => {
+        const rgb = hexToRgb(color.hex);
+        return {
+          id: color.id,
+          role: color.role,
+          name: color.name,
+          hex: color.hex,
+          r: rgb.r,
+          g: rgb.g,
+          b: rgb.b
+        };
+      });
+    }
+
+    function getViewRows() {
+      return [
+        { id: "teacher", name: "老師視角", description: "座位位置旋轉 180 度，但文字保持正向，適合站在前方點名或列印。" },
+        { id: "student", name: "學生視角", description: "坐在學生座位看講台，左右方向符合學生或投影視角。" }
+      ];
+    }
+
+    function updateDataBox() {
+      dataBox.value = JSON.stringify(getExportData(), null, 2);
+    }
+
+    // Falo X Force Cheng：本機儲存是練習便利性，不等同雲端同步或正式資料庫權限。
+    function saveState(showMessage = true) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        people: state.people,
+        colors: getColorRows(),
+        sampleGroupAuthorized: state.sampleGroupAuthorized
+      }));
+      updateDataBox();
+      if (showMessage) showStatus("已儲存到瀏覽器本機。");
+    }
+
+    // Falo X Force Cheng：讀取 localStorage 時會檢查 sampleGroupAuthorized，避免舊版明文練習資料自動浮出。
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const saved = JSON.parse(raw);
+        if (Array.isArray(saved.colors)) {
+          overwriteColors(saved.colors);
+        }
+        state.sampleGroupAuthorized = saved.sampleGroupAuthorized === true;
+        if (Array.isArray(saved.people)) {
+          state.people = defaultPeople.map((defaultPerson) => {
+            const savedPerson = saved.people.find((item) => item.id === defaultPerson.id);
+            if (!savedPerson) return defaultPerson;
+            const mergedPerson = { ...defaultPerson, ...savedPerson };
+            if (mergedPerson.id === "student-09" && mergedPerson.name === "學生9") {
+              mergedPerson.name = "謝總";
+            }
+            if (mergedPerson.role === "teacher" && mergedPerson.seatId === "teacher") {
+              mergedPerson.seatId = null;
+              mergedPerson.x = mergedPerson.x ?? 437;
+              mergedPerson.y = mergedPerson.y ?? 95;
+            }
+            if (/^student-(1[0-8])$/.test(mergedPerson.id) && mergedPerson.name === mergedPerson.label) {
+              mergedPerson.name = "";
+            }
+            if (!["male", "female"].includes(mergedPerson.gender)) {
+              mergedPerson.gender = "";
+            }
+            return mergedPerson;
+          });
+          if (!state.sampleGroupAuthorized) {
+            anonymizeStudents();
+          }
+          normalizeSeatAssignments();
+          updatePeopleColors();
+        }
+      } catch {
+        showStatus("讀取舊資料失敗，已使用預設座位。", true);
+      }
+    }
+
+    function resetState() {
+      localStorage.removeItem(STORAGE_KEY);
+      state.sampleGroupAuthorized = false;
+      state.people = structuredClone(defaultPeople);
+      renderAll();
+      showStatus("已重設為預設座位。");
+    }
+
+    // Falo X Force Cheng：JSON 匯出提供完整資料包，適合給下一階段 OCR / Vision agent 當 Ground Truth。
+    function exportJson() {
+      const blob = new Blob([JSON.stringify(getExportData(), null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `classroom-seat-map-${new Date().toISOString().replaceAll(":", "-")}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      showStatus("已匯出 JSON。");
+    }
+
+    // Falo X Force Cheng：密碼按鈕代表授權載入案例資料；資料解密後才覆蓋目前 state。
+    async function loadSampleGroupWithPassword() {
+      const password = window.prompt("請輸入範例資料載入密碼");
+      if (password === null) return;
+      const passwordHash = await sha256(password);
+      if (passwordHash !== SAMPLE_PASSWORD_HASH) {
+        showStatus("密碼錯誤，未載入範例資料。", true);
+        return;
+      }
+      const protectedData = await decryptProtectedDefaultData(password);
+      loadProtectedDefaultData(protectedData);
+      saveState(false);
+      renderAll();
+      showStatus("已解密並載入 v-b.203 受保護範例資料。");
+    }
+
+    async function sha256(text) {
+      const bytes = new TextEncoder().encode(text);
+      const digest = await crypto.subtle.digest("SHA-256", bytes);
+      return [...new Uint8Array(digest)]
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+    }
+
+    // Falo X Force Cheng：AES-GCM 解密只在瀏覽器端發生，原始案例資料不以明文存在於 HTML。
+    async function decryptProtectedDefaultData(password) {
+      const keyBytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
+      const key = await crypto.subtle.importKey("raw", keyBytes, "AES-GCM", false, ["decrypt"]);
+      const encryptedBytes = base64ToBytes(SAMPLE_GROUP_ENCRYPTED.data);
+      const iv = base64ToBytes(SAMPLE_GROUP_ENCRYPTED.iv);
+      const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, encryptedBytes);
+      return JSON.parse(new TextDecoder().decode(decrypted));
+    }
+
+    function base64ToBytes(value) {
+      return Uint8Array.from(atob(value), (char) => char.charCodeAt(0));
+    }
+
+    // Falo X Force Cheng：受保護資料包可以同時帶入 people 與 colors，老師位置也會跟著回復。
+    function loadProtectedDefaultData(protectedData) {
+      state.sampleGroupAuthorized = true;
+      const people = Array.isArray(protectedData) ? protectedData : protectedData.people || [];
+      const colors = Array.isArray(protectedData) ? [] : protectedData.colors || [];
+      overwriteColors(colors);
+      overwritePeople(people);
+      normalizeSeatAssignments();
+      updatePeopleColors();
+      setView("student");
+      showCaseOverlay("data");
+    }
+
+    // Falo X Force Cheng：未授權狀態只保留座位骨架，不顯示學生姓名與性別。
+    function anonymizeStudents() {
+      state.people.forEach((person) => {
+        if (person.role === "student") {
+          person.name = "";
+          person.gender = "";
+        }
+      });
+    }
+
+    // Falo X Force Cheng：Excel XML 用多工作表呈現資料庫概念，讓非工程背景也能看懂資料關係。
+    function exportCsv() {
+      const workbook = buildExcelWorkbook();
+      downloadTextFile(`classroom-seat-map-${new Date().toISOString().replaceAll(":", "-")}.xls`, workbook, "application/vnd.ms-excel;charset=utf-8");
+      showStatus("已匯出多工作表 Excel。");
+    }
+
+    function buildExcelWorkbook() {
+      const sheets = {
+        people: getPeopleRows().map((person) => ({
+          id: person.id,
+          role: person.role,
+          label: person.label,
+          name: person.name,
+          gender: person.gender,
+          genderDotColor: person.genderDotColor,
+          colorId: person.colorId,
+          color: person.color,
+          seatId: person.seatId || "",
+          x: person.freePosition?.x ?? "",
+          y: person.freePosition?.y ?? ""
+        })),
+        seats: state.seats,
+        colors: getColorRows(),
+        rules: getRuleRows(),
+        views: getViewRows()
+      };
+
+      const worksheets = DB_SHEETS.map((sheet) => {
+        const rows = sheets[sheet.name] || [];
+        const headers = Object.keys(rows[0] || { id: "", description: "" });
+        return `
+          <Worksheet ss:Name="${xmlEscape(sheet.name)}">
+            <Table>
+              ${buildExcelRow(headers)}
+              ${rows.map((row) => buildExcelRow(headers.map((header) => row[header] ?? ""))).join("")}
+            </Table>
+          </Worksheet>
+        `;
+      }).join("");
+
+      return `<?xml version="1.0"?>
+        <?mso-application progid="Excel.Sheet"?>
+        <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+          xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:x="urn:schemas-microsoft-com:office:excel"
+          xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+          ${worksheets}
+        </Workbook>`;
+    }
+
+    function buildExcelRow(values) {
+      return `<Row>${values.map((value) => `<Cell><Data ss:Type="String">${xmlEscape(value)}</Data></Cell>`).join("")}</Row>`;
+    }
+
+    function xmlEscape(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function csvEscape(value) {
+      const text = String(value ?? "");
+      if (/[",\n]/.test(text)) {
+        return `"${text.replaceAll('"', '""')}"`;
+      }
+      return text;
+    }
+
+    function downloadTextFile(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // Falo X Force Cheng：匯入採全覆蓋，這能避免「畫面一半新資料、一半舊資料」造成治理混亂。
+    function importOverwrite(file) {
+      const reader = new FileReader();
+      reader.addEventListener("load", () => {
+        try {
+          const text = String(reader.result || "");
+          const fileName = file.name.toLowerCase();
+          const imported = fileName.endsWith(".json")
+            ? parseDatabaseFromJson(text)
+            : (fileName.endsWith(".xls") || fileName.endsWith(".xml"))
+              ? parseDatabaseFromExcelXml(text)
+              : { people: parsePeopleFromCsv(text), colors: [] };
+          overwriteColors(imported.colors || []);
+          overwritePeople(imported.people || []);
+          normalizeSeatAssignments();
+          updatePeopleColors();
+          saveState(false);
+          renderAll();
+          showStatus("已匯入並全覆蓋目前資料庫。");
+        } catch (error) {
+          showStatus(`匯入失敗：${error.message}`, true);
+        } finally {
+          importFile.value = "";
+        }
+      });
+      reader.readAsText(file);
+    }
+
+    // Falo X Force Cheng：JSON 可接受完整匯出包，也可接受簡化 people 陣列，方便不同程度學生練習。
+    function parseDatabaseFromJson(text) {
+      const data = JSON.parse(text);
+      const people = Array.isArray(data)
+        ? data
+        : data.database?.tables?.people || data.people;
+      if (!Array.isArray(people)) {
+        throw new Error("JSON 需要包含 people 陣列。");
+      }
+      return {
+        people,
+        colors: data.database?.tables?.colors || data.colorPalette || data.colors || []
+      };
+    }
+
+    function parseDatabaseFromExcelXml(text) {
+      const doc = new DOMParser().parseFromString(text, "text/xml");
+      const parserError = doc.querySelector("parsererror");
+      if (parserError) throw new Error("Excel XML 格式無法讀取。");
+      return {
+        people: readWorksheetRows(doc, "people"),
+        colors: readWorksheetRows(doc, "colors")
+      };
+    }
+
+    function readWorksheetRows(doc, sheetName) {
+      const worksheets = [...doc.getElementsByTagNameNS("*", "Worksheet")];
+      const sheet = worksheets.find((item) => item.getAttribute("ss:Name") === sheetName || item.getAttribute("Name") === sheetName);
+      if (!sheet) return [];
+      const rows = [...sheet.getElementsByTagNameNS("*", "Row")].map((row) => {
+        return [...row.getElementsByTagNameNS("*", "Cell")].map((cell) => {
+          const data = cell.getElementsByTagNameNS("*", "Data")[0];
+          return data?.textContent ?? "";
+        });
+      });
+      if (rows.length < 2) return [];
+      const headers = rows[0];
+      return rows.slice(1).map((row) => {
+        const item = {};
+        headers.forEach((header, index) => {
+          item[header] = row[index] ?? "";
+        });
+        return item;
+      });
+    }
+
+    function parsePeopleFromCsv(text) {
+      const rows = parseCsvRows(text.replace(/^\uFEFF/, ""));
+      if (rows.length < 2) {
+        throw new Error("CSV 需要標題列與至少一筆人物資料。");
+      }
+      const headers = rows[0].map((item) => item.trim());
+      return rows.slice(1).filter((row) => row.some(Boolean)).map((row) => {
+        const item = {};
+        headers.forEach((header, index) => {
+          item[header] = row[index] ?? "";
+        });
+        return item;
+      });
+    }
+
+    function parseCsvRows(text) {
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i += 1) {
+        const char = text[i];
+        const next = text[i + 1];
+        if (char === '"' && inQuotes && next === '"') {
+          cell += '"';
+          i += 1;
+        } else if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === "," && !inQuotes) {
+          row.push(cell);
+          cell = "";
+        } else if ((char === "\n" || char === "\r") && !inQuotes) {
+          if (char === "\r" && next === "\n") i += 1;
+          row.push(cell);
+          rows.push(row);
+          row = [];
+          cell = "";
+        } else {
+          cell += char;
+        }
+      }
+      row.push(cell);
+      rows.push(row);
+      return rows.filter((items) => items.length > 1 || items[0] !== "");
+    }
+
+    // Falo X Force Cheng：覆蓋人物時只接受既有 id，避免匯入資料偷偷新增超出 18 座位的學生卡。
+    function overwritePeople(importedPeople) {
+      const seatIds = new Set(state.seats.map((seat) => seat.id));
+      state.people = defaultPeople.map((defaultPerson) => {
+        const imported = importedPeople.find((item) => item.id === defaultPerson.id);
+        if (!imported) return structuredClone(defaultPerson);
+        const color = colorPalette.find((item) => item.id === imported.colorId);
+        const nextPerson = {
+          ...defaultPerson,
+          name: Object.prototype.hasOwnProperty.call(imported, "name") ? String(imported.name || "").trim() : defaultPerson.name,
+          gender: ["male", "female"].includes(imported.gender) ? imported.gender : (defaultPerson.gender || ""),
+          colorId: color ? color.id : defaultPerson.colorId,
+          color: color ? color.hex : (imported.color || defaultPerson.color)
+        };
+        if (imported.seatId && seatIds.has(imported.seatId)) {
+          nextPerson.seatId = imported.seatId;
+          delete nextPerson.x;
+          delete nextPerson.y;
+        } else {
+          nextPerson.seatId = null;
+          const freePosition = imported.freePosition && typeof imported.freePosition === "object"
+            ? imported.freePosition
+            : {};
+          const importedX = imported.x ?? freePosition.x;
+          const importedY = imported.y ?? freePosition.y;
+          const fallbackX = defaultPerson.role === "teacher" ? 437 : 40;
+          const fallbackY = defaultPerson.role === "teacher" ? 95 : 610;
+          nextPerson.x = Number(importedX) || fallbackX;
+          nextPerson.y = Number(importedY) || fallbackY;
+        }
+        return nextPerson;
+      });
+    }
+
+    // Falo X Force Cheng：色卡可用 hex 或 RGB 匯入，讓 Excel 與 JSON 都能形成同一個閉環。
+    function overwriteColors(importedColors) {
+      if (!Array.isArray(importedColors)) return;
+      importedColors.forEach((imported) => {
+        const color = colorPalette.find((item) => item.id === imported.id);
+        if (!color) return;
+        if (imported.hex) {
+          color.hex = normalizeHex(imported.hex, color.hex);
+        } else if (imported.r !== undefined || imported.g !== undefined || imported.b !== undefined) {
+          color.hex = rgbToHex(Number(imported.r) || 0, Number(imported.g) || 0, Number(imported.b) || 0);
+        }
+        if (imported.name) color.name = String(imported.name);
+      });
+    }
+
+    function normalizeHex(value, fallback) {
+      const text = String(value || "").trim();
+      return /^#[0-9a-fA-F]{6}$/.test(text) ? text.toLowerCase() : fallback;
+    }
+
+    // Falo X Force Cheng：正規化負責最後守門，處理重複座位、錯誤 seatId 與老師區域邊界。
+    function normalizeSeatAssignments() {
+      const occupied = new Set();
+      state.people.filter(isVisiblePerson).forEach((person) => {
+        if (person.role === "teacher" && person.seatId === null) {
+          person.x = clamp(Number(person.x) || TEACHER_AREA.x, TEACHER_AREA.x, TEACHER_AREA.x + TEACHER_AREA.width - CARD.width);
+          person.y = clamp(Number(person.y) || TEACHER_AREA.y, TEACHER_AREA.y, TEACHER_AREA.y + TEACHER_AREA.height - CARD.height);
+          return;
+        }
+        const seat = getSeat(person.seatId);
+        if (!seat || seat.type !== person.role || occupied.has(person.seatId)) {
+          const nextSeat = state.seats.find((candidate) => {
+            return candidate.type === person.role && !occupied.has(candidate.id);
+          });
+          person.seatId = nextSeat ? nextSeat.id : null;
+          delete person.x;
+          delete person.y;
+        }
+        if (person.seatId) occupied.add(person.seatId);
+      });
+    }
+
+    // Falo X Force Cheng：切換視角只改顯示邏輯，不改資料本體，這是 Ground Truth 工具的重要邊界。
+    function setView(view) {
+      document.body.dataset.view = view;
+      teacherViewBtn.classList.toggle("active", view === "teacher");
+      studentViewBtn.classList.toggle("active", view === "student");
+      viewNote.textContent = view === "teacher"
+        ? "老師視角：座位位置旋轉 180 度，但文字保持正向，站在前方看台下時可直接點名或列印。"
+        : "學生視角：坐在台下看前方，左右方向符合學生或投影畫面。";
+      roomLayer.setAttribute("transform", "");
+      localStorage.setItem(`${STORAGE_KEY}_view`, view);
+      drawStaticRoom();
+      drawFurniture();
+      drawPeople();
+      updateDataBox();
+    }
+
+    function showStatus(message, isWarning = false) {
+      statusText.textContent = message;
+      statusText.style.color = isWarning ? "#b42318" : "var(--ok)";
+      window.clearTimeout(showStatus.timer);
+      showStatus.timer = window.setTimeout(() => {
+        statusText.textContent = "";
+      }, 2400);
+    }
+
+    function renderAll() {
+      drawStaticRoom();
+      drawFurniture();
+      drawPeople();
+      renderNameInputs();
+      renderColorGrid();
+      updateDataBox();
+    }
+
+    // Falo X Force Cheng：啟動順序是先建立固定座位，再讀取資料，最後渲染畫面。
+    buildSeatModel();
+    loadState();
+    renderAll();
+
+    document.getElementById("saveBtn").addEventListener("click", () => saveState(true));
+    document.getElementById("exportBtn").addEventListener("click", exportJson);
+    document.getElementById("exportCsvBtn").addEventListener("click", exportCsv);
+    document.getElementById("importBtn").addEventListener("click", () => importFile.click());
+    document.getElementById("sampleGroupBtn").addEventListener("click", loadSampleGroupWithPassword);
+    importFile.addEventListener("change", () => {
+      const file = importFile.files?.[0];
+      if (file) importOverwrite(file);
+    });
+    document.getElementById("resetBtn").addEventListener("click", resetState);
+    teacherViewBtn.addEventListener("click", () => setView("teacher"));
+    studentViewBtn.addEventListener("click", () => setView("student"));
+    document.querySelectorAll("[data-case]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.dataset.case !== "clear") {
+          setView("student");
+        }
+        showCaseOverlay(button.dataset.case);
+      });
+    });
+    setView(localStorage.getItem(`${STORAGE_KEY}_view`) || "teacher");
+    window.addEventListener("beforeunload", () => saveState(false));
+  </script>
+</body>
+</html>

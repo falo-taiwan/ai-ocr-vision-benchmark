@@ -29,6 +29,20 @@
 
 正式發布時可以優先使用 `index.html` 作為單檔展示頁。
 
+## AI OCR Classroom v-b.203
+
+- `classroom-seat-map.html`
+  - 教室座位 SVG 配置工具。
+  - 預設畫面去識別化；受保護範例資料需輸入密碼後才解密載入。
+  - 支援密碼門檻載入範例資料、學生視角工程註解、JSON / Excel 匯入匯出。
+  - v-b.203 起，程式碼內加入大量 `Falo X Force Cheng` 教學註解，讓 HTML 本身也能當教材閱讀。
+
+- `docs/ai-ocr-classroom-v1.02.md`
+  - 人看的 Markdown 說明。
+
+- `docs/ai-ocr-classroom-v1.02.html`
+  - 人看的 HTML 說明頁。
+
 ## Mode 1 核心功能
 
 - 每 N 秒產生九宮格顏色。
